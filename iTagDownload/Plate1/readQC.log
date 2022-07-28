@@ -1,0 +1,9 @@
+#STEP	COUNT	PCT OF PREVIOUS STEP
+Input	12,409,298	
+Filtered phix174_NC_001422.1	12,376,170	99.7%
+Filtered Illumina.artifacts	12,373,610	100%
+Primer-trimmed	12,241,541	98.9%
+Extended	12,106,667	98.9%
+Length-filtered	12,105,489	100%
+High quality	9,062,136	74.9%
+Unique	4,405,232	48.6%
