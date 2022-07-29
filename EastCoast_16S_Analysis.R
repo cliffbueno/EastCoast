@@ -739,7 +739,7 @@ bars <- plot_taxa_bars(tax_sum_guilds,
                         levels = Guild_cols$Guild))
 ggplot(bars, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
-  labs(x = "Experiment", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "Experiment", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   theme_bw() +
   theme(axis.title = element_text(face = "bold", size = 14), 
@@ -1053,7 +1053,7 @@ ggplot(sc_barsGu, aes(group_by, mean_value, fill = taxon)) +
   geom_text(data = bar_textGu,
             aes(x = group_by, y = y, label = label),
             inherit.aes = F) +
-  labs(x = "Sample", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "Sample", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   scale_x_discrete(labels = c("Control", "+Fresh", "+Salt", "Control", "+Fresh", "+Salt")) +
   ylim(0, 0.35) +
@@ -1568,7 +1568,7 @@ nc_barsGu <- plot_taxa_bars(nc_guilds, nc$map_loaded, "Treatment", num_taxa = 20
 pdf("Figs/NC_Guilds.pdf", width = 7, height = 5)
 ggplot(nc_barsGu, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
-  labs(x = "Treatment", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "Treatment", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   scale_x_discrete(labels = c("Field", "Control", "+SO4", "+Salt", "+Salt +SO4")) +
   theme_classic() +
@@ -2047,14 +2047,15 @@ defie_barsGu <- plot_taxa_bars(defie_guilds, defie$map_loaded, "Salt", num_taxa 
   droplevels() %>%
   mutate(taxon = factor(taxon,
                         levels = Guild_cols$Guild))
-pdf("Figs/defie_Guilds.pdf", width = 7, height = 5)
+pdf("Figs/DEfie_Guilds.pdf", width = 7, height = 5)
 ggplot(defie_barsGu, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
-  labs(x = "Salt", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "Salt", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   theme_classic() +
-  theme(axis.title = element_text(face = "bold", size = 16), 
-        axis.text = element_text(size = 14))
+  theme(axis.title.y = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10),
+        axis.title.x = element_blank())
 dev.off()
 taxa_summary_by_sample_type(defie_guilds, 
                             defie$map_loaded, 
@@ -2617,7 +2618,7 @@ ggplot(deinc_barsGu, aes(group_by, mean_value, fill = taxon)) +
   geom_text(data = bar_textGu,
             aes(x = group_by, y = y, label = label),
             inherit.aes = F) +
-  labs(x = "TrtDepth", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "TrtDepth", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   scale_x_discrete(labels = c("Initial", "Fresh", "ASW", "Initial", "Fresh", "ASW")) +
   theme_classic() +
@@ -2774,7 +2775,7 @@ bp.y <- ggplot(data = deinc_mp_results, aes(x = taxon, y = RelAbundance)) +
         legend.position="none", axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-3,0))), 
         plot.margin = margin(c(0,-2,0,-5))) +
   labs(y = "Rel. abund. (%)")
-pdf("Figs/deinc_Multipatt.pdf", width = 8, height = 5)
+pdf("Figs/DEinc_Multipatt.pdf", width = 8, height = 5)
 plot_grid(hm.clean, bp.y, l, NULL, nrow = 2, ncol = 2, 
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
@@ -2989,10 +2990,10 @@ detra_barsGu <- plot_taxa_bars(detra_guilds, detra$map_loaded, "Treatment", num_
   droplevels() %>%
   mutate(taxon = factor(taxon,
                         levels = Guild_cols$Guild))
-pdf("Figs/DEtra_Guilds.pdf", width = 7, height = 5)
+pdf("Figs/DEtra_Guilds.pdf", width = 7, height = 6)
 ggplot(detra_barsGu, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
-  labs(x = "Treatment", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "Treatment", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
@@ -3641,7 +3642,7 @@ bars <- plot_taxa_bars(tax_sum_guilds,
 pdf("Figs/CombGuilds.pdf", width = 7, height = 5)
 ggplot(bars, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
-  labs(x = "Estuary", y = "Relative Abundance", fill = "Phylum") +
+  labs(x = "Estuary", y = "Relative Abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
@@ -3804,21 +3805,21 @@ field$map_loaded <- field$map_loaded %>%
                                   "Mesohaline", "Polyhaline")))
 
 #### __Alpha ####
-leveneTest(field$map_loaded$rich ~ field$map_loaded$Salt) # Not homogeneous
+leveneTest(field$map_loaded$rich ~ field$map_loaded$Salt) # Almost homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = field$map_loaded)
 Anova(m, type = "III") # Estuary, Salt sig. Depth marginal.
 m <- aov(rich ~ Salt, data = field$map_loaded)
-shapiro.test(m$residuals)
+shapiro.test(m$residuals) # Normal
 summary(m)
 t <- emmeans(object = m, specs = "Salt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "rich",
          y = max(field$map_loaded$rich)+(max(field$map_loaded$rich)-min(field$map_loaded$rich))/20)
-leveneTest(field$map_loaded$shannon ~ field$map_loaded$Salt) # Homogenoeus
+leveneTest(field$map_loaded$shannon ~ field$map_loaded$Salt) # Homogeneous
 m1 <- aov(shannon ~ Estuary + Salt + Depth, data = field$map_loaded)
 Anova(m1, type = "III") # All sig
 m1 <- aov(shannon ~ Salt, data = field$map_loaded)
-shapiro.test(m1$residuals)
+shapiro.test(m1$residuals) # Not normal
 summary(m1)
 t1 <- emmeans(object = m1, specs = "Salt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
@@ -3853,9 +3854,8 @@ anova(betadisper(field_bc, field$map_loaded$Estuary)) # Dispersion not homogeneo
 anova(betadisper(field_bc, field$map_loaded$Salt)) # Dispersion not homogeneous
 anova(betadisper(field_bc, field$map_loaded$Depth)) # Dispersion homogeneous
 field_pcoa <- cmdscale(field_bc, k = nrow(field$map_loaded) - 1, eig = T)
-eigenvals(field_pcoa)/sum(eigenvals(field_pcoa)) # 14.3, 11.2 % variation explained
-pcoaA1 <- round((eigenvals(exp_pcoa)/sum(eigenvals(exp_pcoa)))[1]*100, digits = 1)
-pcoaA2 <- round((eigenvals(exp_pcoa)/sum(eigenvals(exp_pcoa)))[2]*100, digits = 1)
+pcoaA1 <- round((eigenvals(field_pcoa)/sum(eigenvals(field_pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(field_pcoa)/sum(eigenvals(field_pcoa)))[2]*100, digits = 1)
 field$map_loaded$Axis01 <- scores(field_pcoa)[,1]
 field$map_loaded$Axis02 <- scores(field_pcoa)[,2]
 micro.hulls <- ddply(field$map_loaded, c("Salt"), find_hull)
@@ -3994,7 +3994,6 @@ pdf("Figs/Comb_Control_BC.pdf", width = 6, height = 5)
 ggdraw(plot_final)
 dev.off()
 
-
 #### __Taxa ####
 field_phyla <- summarize_taxonomy(field, level = 2, report_higher_tax = F)
 plot_ts_heatmap(field_phyla, field$map_loaded, 0.01, 'EstSalt', rev_taxa = T) +
@@ -4108,25 +4107,49 @@ ggplot(field_barsG, aes(group_by, mean_value, fill = taxon)) +
 dev.off()
 taxa_summary_by_sample_type(field_genus, field$map_loaded, 'EstSalt', 0.01, 'KW')
 
+field_guilds <- summarize_taxonomy(field, level = 9, report_higher_tax = F)
+plot_ts_heatmap(field_guilds, field$map_loaded, 0, 'EstSalt', rev_taxa = T, remove_other = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+field_barsGu <- plot_taxa_bars(field_guilds, field$map_loaded, "EstSalt",
+                               num_taxa = 20, data_only = T) %>%
+  filter(taxon != "NA") %>%
+  droplevels() %>%
+  mutate(taxon = factor(taxon,
+                        levels = Guild_cols$Guild))
+pdf("Figs/Comb_Control_Guilds.pdf", width = 7, height = 6)
+ggplot(field_barsGu, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Estuary", y = "Relative Abundance", fill = "Guild") +
+  scale_fill_manual(values = Guild_cols$color) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
+dev.off()
+taxa_summary_by_sample_type(field_guilds, field$map_loaded, 'EstSalt', 0.01, 'KW')
+
 #### __Methano ####
 # Summarize by family, extract methanogens
 tax_sum_family_wTax <- summarize_taxonomy(field, level = 5, report_higher_tax = T, 
                                           relative = FALSE)
 methano_wTax <- tax_sum_family_wTax[grep("Methano", rownames(tax_sum_family_wTax)),]
-# 22, including some NA
+# 20, including 5 NA
 
 # Without higher tax, remove NAs, relative abundance
 tax_sum_family <- summarize_taxonomy(field, level = 5, report_higher_tax = FALSE, 
                                      relative = TRUE)
 methano <- tax_sum_family[grep("Methano", rownames(tax_sum_family)),]
-
 field_barsMethano <- plot_taxa_bars(methano, field$map_loaded, "EstSalt", 
                               num_taxa = nrow(methano), data_only = T)
+nb.cols <- nrow(methano)
+mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(nb.cols)
 pdf("Figs/Comb_Control_Methano.pdf", width = 7, height = 5)
 ggplot(field_barsMethano, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
   labs(x = NULL, y = "Relative Abundance", fill = "Family") +
-  scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[12:1])) +
+  scale_fill_manual(values = mycolors) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
@@ -4144,7 +4167,7 @@ desulfo_wTax <- tax_sum_family_wTax[grep("Desulfo", rownames(tax_sum_family_wTax
 tax_sum_order_wTax <- summarize_taxonomy(field, level = 4, report_higher_tax = T, 
                                           relative = TRUE)
 desulfo_wTax <- tax_sum_order_wTax[grep("Desulfo", rownames(tax_sum_order_wTax)),]
-# 20, including some NA
+# 21, including some NA
 # Trim off bacteria
 rownames(desulfo_wTax) <- substring(rownames(desulfo_wTax), 11)
 nb.cols <- nrow(desulfo_wTax)
@@ -4157,14 +4180,13 @@ ggplot(field_barsDesulfo, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
   labs(x = NULL, y = "Relative Abundance", fill = "Order") +
   scale_fill_manual(values = mycolors) +
+  guides(fill = guide_legend(ncol = 1)) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 dev.off()
-
-
 
 #### __Simper ####
 field_sim <- simper(t(field$data_loaded), 
@@ -4205,10 +4227,8 @@ field_simper_results <- rbind(field_df1, field_df2, field_df3) %>%
   dplyr::select(Comparison, SaltResponse, Domain, Phylum, Class, Order, Family, Genus,
                 Species, OTU, MeanSalt, MeanControl, CumulativeContribution)
 write_xlsx(field_simper_results, 
-           "comb_control_simper_results.xlsx",
+           "simper_results_comb_control.xlsx",
            format_headers = F)
-
-
 
 #### __Multipatt ####
 set.seed(1202)
@@ -4482,7 +4502,10 @@ lab$map_loaded <- lab$map_loaded %>%
                               "5 ppt ASW 12wk" = "+ASW",
                               "5ppt ASW" = "+ASW"))
 
-
+# Need combined estuary/salt factor
+lab$map_loaded$EstSalt <- paste(lab$map_loaded$Estuary,
+                                lab$map_loaded$Salt,
+                                sep = "_")
 
 #### __Alpha ####
 leveneTest(lab$map_loaded$rich ~ lab$map_loaded$Salt) # Homogeneous
@@ -4515,10 +4538,6 @@ dev.off()
 
 
 #### __Beta ####
-# Need combined estuary/salt factor
-lab$map_loaded$EstSalt <- paste(lab$map_loaded$Estuary,
-                                lab$map_loaded$Salt,
-                                sep = "_")
 lab_bc <- calc_dm(lab$data_loaded)
 set.seed(1150)
 adonis2(lab_bc ~ lab$map_loaded$Estuary+lab$map_loaded$Salt+lab$map_loaded$Depth) # All
@@ -4683,7 +4702,31 @@ ggplot(lab_barsG, aes(Salt, mean_value, fill = taxon)) +
 dev.off()
 taxa_summary_by_sample_type(lab_genus, lab$map_loaded, 'EstSalt', 0.01, 'KW')
 
-
+lab_guilds <- summarize_taxonomy(lab, level = 9, report_higher_tax = F)
+plot_ts_heatmap(lab_guilds, lab$map_loaded, 0, 'EstSalt', rev_taxa = T, remove_other = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+lab_barsGu <- plot_taxa_bars(lab_guilds, lab$map_loaded, "EstSalt",
+                               num_taxa = 20, data_only = T) %>%
+  filter(taxon != "NA") %>%
+  droplevels() %>%
+  mutate(taxon = factor(taxon,
+                        levels = Guild_cols$Guild)) %>%
+  separate(group_by, into = c("Estuary", "Salt"), sep = "_") %>%
+  mutate(Salt = fct_rev(Salt))
+pdf("Figs/Comb_Lab_Guilds.pdf", width = 7, height = 5)
+ggplot(lab_barsGu, aes(Salt, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Estuary", y = "Relative Abundance", fill = "Guild") +
+  scale_fill_manual(values = Guild_cols$color) +
+  facet_wrap(~ Estuary) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
+dev.off()
+taxa_summary_by_sample_type(lab_guilds, lab$map_loaded, 'EstSalt', 0.01, 'KW')
 
 #### __Methano ####
 # Summarize by family, extract methanogens
@@ -4714,14 +4757,12 @@ ggplot(lab_barsMethano, aes(Salt, mean_value, fill = taxon)) +
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 dev.off()
 
-
-
 #### __Desulfo ####
 # Summarize by family, extract sulfate reducers
 tax_sum_family_wTax <- summarize_taxonomy(lab, level = 5, report_higher_tax = T, 
                                           relative = FALSE)
 desulfo_wTax <- tax_sum_family_wTax[grep("Desulfo", rownames(tax_sum_family_wTax)),]
-# 36, including 10 NA. Note, some Desulfobacterota and some Firmicutes
+# 34, including some NA. Note, some Desulfobacterota and some Firmicutes
 # Too many, try order
 tax_sum_order_wTax <- summarize_taxonomy(lab, level = 4, report_higher_tax = T, 
                                          relative = TRUE)
@@ -4749,8 +4790,6 @@ ggplot(lab_barsDesulfo, aes(Salt, mean_value, fill = taxon)) +
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 dev.off()
 
-
-
 #### __Simper ####
 lab_sim <- simper(t(lab$data_loaded), 
                     lab$map_loaded$Salt)
@@ -4776,10 +4815,8 @@ lab_df1 <- head(lab_s$`Control_+ASW`, n = 20) %>%
   dplyr::select(Comparison, SaltResponse, Domain, Phylum, Class, Order, Family, Genus,
                 Species, OTU, MeanSalt, MeanControl, CumulativeContribution)
 write_xlsx(lab_df1, 
-           "comb_lab_simper_results.xlsx",
+           "simper_results_comb_lab.xlsx",
            format_headers = F)
-
-
 
 #### __Multipatt ####
 set.seed(1202)
@@ -4911,7 +4948,10 @@ exp$map_loaded <- exp$map_loaded %>%
                               "TFM1@OligoHal" = "+ASW",
                               "Saltwater amended" = "+ASW"))
 
-
+# Need combined estuary/salt factor
+exp$map_loaded$EstSalt <- paste(exp$map_loaded$Estuary,
+                                exp$map_loaded$Salt,
+                                sep = "_")
 
 #### __Alpha ####
 leveneTest(exp$map_loaded$rich ~ exp$map_loaded$Salt) # Homogeneous
@@ -4941,13 +4981,7 @@ ggplot(alpha_long, aes(reorder(Salt, value, mean), value)) +
         strip.text = element_text(size = 10))
 dev.off()
 
-
-
 #### __Beta ####
-# Need combined estuary/salt factor
-exp$map_loaded$EstSalt <- paste(exp$map_loaded$Estuary,
-                                exp$map_loaded$Salt,
-                                sep = "_")
 exp_bc <- calc_dm(exp$data_loaded)
 set.seed(1150)
 adonis2(exp_bc ~ Estuary + Salt + Depth, data = exp$map_loaded) # All
@@ -4981,8 +5015,6 @@ ggplot(exp$map_loaded, aes(Axis01, Axis02)) +
         axis.title = element_text(face = "bold", size = 12), 
         axis.text = element_text(size = 10))
 dev.off()
-
-
 
 #### __Taxa ####
 exp_phyla <- summarize_taxonomy(exp, level = 2, report_higher_tax = F)
@@ -5112,7 +5144,31 @@ ggplot(exp_barsG, aes(Salt, mean_value, fill = taxon)) +
 dev.off()
 taxa_summary_by_sample_type(exp_genus, exp$map_loaded, 'EstSalt', 0.01, 'KW')
 
-
+exp_guilds <- summarize_taxonomy(exp, level = 9, report_higher_tax = F)
+plot_ts_heatmap(exp_guilds, exp$map_loaded, 0, 'EstSalt', rev_taxa = T, remove_other = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+exp_barsGu <- plot_taxa_bars(exp_guilds, exp$map_loaded, "EstSalt",
+                             num_taxa = 20, data_only = T) %>%
+  filter(taxon != "NA") %>%
+  droplevels() %>%
+  mutate(taxon = factor(taxon,
+                        levels = Guild_cols$Guild)) %>%
+  separate(group_by, into = c("Estuary", "Salt"), sep = "_") %>%
+  mutate(Salt = fct_rev(Salt))
+pdf("Figs/Comb_Exp_Guilds.pdf", width = 7, height = 5)
+ggplot(exp_barsGu, aes(Salt, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Estuary", y = "Relative Abundance", fill = "Guild") +
+  scale_fill_manual(values = Guild_cols$color) +
+  facet_wrap(~ Estuary) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
+dev.off()
+taxa_summary_by_sample_type(exp_guilds, exp$map_loaded, 'EstSalt', 0.01, 'KW')
 
 #### __Methano ####
 # Summarize by family, extract methanogens
@@ -5143,14 +5199,12 @@ ggplot(exp_barsMethano, aes(Salt, mean_value, fill = taxon)) +
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 dev.off()
 
-
-
 #### __Desulfo ####
 # Summarize by family, extract sulfate reducers
 tax_sum_family_wTax <- summarize_taxonomy(exp, level = 5, report_higher_tax = T, 
                                           relative = FALSE)
 desulfo_wTax <- tax_sum_family_wTax[grep("Desulfo", rownames(tax_sum_family_wTax)),]
-# 36, including 13 NA. Note, some Desulfobacterota and some Firmicutes
+# 41, including some NA. Note, some Desulfobacterota and some Firmicutes
 # Too many, try order
 tax_sum_order_wTax <- summarize_taxonomy(exp, level = 4, report_higher_tax = T, 
                                          relative = TRUE)
@@ -5178,8 +5232,6 @@ ggplot(exp_barsDesulfo, aes(Salt, mean_value, fill = taxon)) +
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 dev.off()
 
-
-
 #### __Simper ####
 exp_sim <- simper(t(exp$data_loaded), 
                   exp$map_loaded$Salt)
@@ -5205,10 +5257,8 @@ exp_df1 <- head(exp_s$`Control_+ASW`, n = 20) %>%
   dplyr::select(Comparison, SaltResponse, Domain, Phylum, Class, Order, Family, Genus,
                 Species, OTU, MeanSalt, MeanControl, CumulativeContribution)
 write_xlsx(exp_df1, 
-           "comb_exp_simper_results.xlsx",
+           "simper_results_comb_exp.xlsx",
            format_headers = F)
-
-
 
 #### __Multipatt ####
 set.seed(1202)
@@ -5294,7 +5344,5 @@ pdf("Figs/Comb_Exp_Multipatt.pdf", width = 8, height = 10)
 plot_grid(exp.hm.clean, exp.bp.y, exp.l, NULL, nrow = 2, ncol = 2, 
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
-
-
 
 #### End Script ####
