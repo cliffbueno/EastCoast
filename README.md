@@ -6,14 +6,14 @@
 ### Collaboration with Emily Bernhardt, Marcelo Ardón, Scott Neubauer, Nat Weston
 ### Exploratory figures in "Figs" folder
 Figure name prefix key:\
--EastCoast = East Coast samples only\
 -Comb = SF Bay and East Coast samples\
 -Comb_Control = SF Bay and East Coast unmanipulated field samples only\
 -Comb_Lab = East Coast lab incubation samples only\
 -Comb_Exp = East Coast field experimental samples only\
+-DEinc = Delaware River lab incubation\
+-DEfie = Delaware River unmanipulated field soils\
+-DEtra = Delaware River transplant experiment\
+-EastCoast = East Coast samples only\
+-Map = geographic map of sites
 -NC = North Carolina project (lab incubation)\
 -SC = South Carolina project (field experiment)\
--DEfie = Delaware River unmanipulated field soils\
--DEinc = Delaware River lab incubation\
--DEtra = Delaware River transplant experiment\
--Map = geographic map of sites
