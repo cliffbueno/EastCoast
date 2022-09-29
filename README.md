@@ -43,21 +43,21 @@ _Multipatt_genus = multipatt indicator species analysis done at genus level\
 _Multipatt = multipatt indicator species analysis done at OTU level\
 
 ### Functional guilds key:
-The following guilds are called based on names that have known and described functions\n
-FeRB: Iron reducing bacteria
-FeOB: Iron oxidizing bacteria
-SRB: Sulfur reducing bacteria
-SRB_syn: Syntrophic sulfur reducing bacteria
-SOxB: Sulfur oxidizing bacteria
-Anamx: Ammonium oxidizing bacteria
-NOB: Nitrite oxidizing bacteria
-AOB: Ammonium oxidizing bacteria
-AOA: Ammonium oxidizing archaea
-ANME: Anaerobic methane oxidizing archaea
-MOB_IIa: Methane oxidizing bacteria group IIa
-MOB_II: Methane oxidizing bacteria group II
-MOB_I: Methane oxidizing bacteria group I
-CH4_ac: strictly acetoclastic methanogenic archaea
-CH4_h2: strictly hydrogenotrophic methanogenic archaea
-CH4_me: strictly methanotrophic or methyl-reducing methanogenic archaea
-CH4_mix: mixotrophic methanogenic archaea capable of performing multiple methanogenic pathways
+The following guilds are called based on names that have known and described functions\
+FeRB: Iron reducing bacteria\
+FeOB: Iron oxidizing bacteria\
+SRB: Sulfur reducing bacteria\
+SRB_syn: Syntrophic sulfur reducing bacteria\
+SOxB: Sulfur oxidizing bacteria\
+Anamx: Anaerobic ammonium oxidizing bacteria\
+NOB: Nitrite oxidizing bacteria\
+AOB: Ammonia oxidizing bacteria\
+AOA: Ammonia oxidizing archaea\
+ANME: Anaerobic methane oxidizing archaea\
+MOB_IIa: Methane oxidizing bacteria group IIa\
+MOB_II: Methane oxidizing bacteria group II\
+MOB_I: Methane oxidizing bacteria group I\
+CH4_ac: strictly acetoclastic methanogenic archaea\
+CH4_h2: strictly hydrogenotrophic methanogenic archaea\
+CH4_me: strictly methanotrophic or methyl-reducing methanogenic archaea\
+CH4_mix: mixotrophic methanogenic archaea capable of performing multiple methanogenic pathways\
