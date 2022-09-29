@@ -13,7 +13,7 @@ Comb_Lab = Combined East Coast lab incubation samples only (week 12, controls an
 DEinc = Delaware River lab incubation\
 DEfie = Delaware River unmanipulated field soils\
 DEtra = Delaware River transplant experiment\
-Map = geographic map of sites
+Map = geographic map of sites\
 NC = North Carolina (Alligator) project (lab incubation)\
 SC = South Carolina (Waccamaw) project (field experiment)\
 
