@@ -1,11 +1,11 @@
 # East Coast - SF Microbial Analyses
 
-### 16S rRNA gene data analysis of sediment samples from Delaware River Estuary (NJ), Alligator River Estuary (NC), Waccamaw River Estuary (SC) and San Francisco Bay Estuary (CA).
-### Data collected from multiple field samples, field experiments, laboratory microcosms
-### Overall goals are to understand how microbial ecology contributes to methane emissions across salinity gradients
-### Collaboration with Emily Bernhardt, Marcelo Ardón, Scott Neubauer, Nat Weston
-### Exploratory figures in "InitialFigs" folder
-#### Figure name prefix key:\
+## 16S rRNA gene data analysis of sediment samples from Delaware River Estuary (NJ), Alligator River Estuary (NC), Waccamaw River Estuary (SC) and San Francisco Bay Estuary (CA).
+## Data collected from multiple field samples, field experiments, laboratory microcosms
+## Overall goals are to understand how microbial ecology contributes to methane emissions across salinity gradients
+## Collaboration with Emily Bernhardt, Marcelo Ardón, Scott Neubauer, Nat Weston
+## Exploratory figures in "InitialFigs" folder
+### Figure name prefix key:
 -Comb_All = Combined all SF Bay and East Coast samples (n = 343)\
 -Comb_Control = Combined SF Bay and East Coast unmanipulated field samples only\
 -Comb_Exp = Combined East Coast field experimental samples only, controls (for DE that means transplant to TFM) and +ASW (for DE that means transplant to Mesohaline site)\
@@ -17,7 +17,7 @@
 -NC = North Carolina (Alligator) project (lab incubation)\
 -SC = South Carolina (Waccamaw) project (field experiment)\
 
-#### Figure name suffix key:\
+### Figure name suffix key:
 -_Alpha = alpha diversity, combined graph showing OTU richness and Shannon diversity\
 -_Richness = OTU richness\
 -_Shannon = Shannon diversity\
