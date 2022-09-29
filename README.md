@@ -29,7 +29,7 @@
 -_Phyla_samples = phylum level stacked bar plot, showing individual samples, showing top 12 phyla, the rest are lumped into "Other"\
 -_Phyla = phylum level stacked bar plot, summarized by group, showing top 12 phyla, the rest are lumped into "Other"\
 -_Class = class level stacked bar plot, summarized by group, showing top 12 phyla, the rest are lumped into "Other"\
--_Desulfo = class level stacked bar plot of taxa in the sulfur reducing bacteria (SRB) and syntrophic sulfur reducing bacteria (SRB_syn) guilds\
+-_Desulfo = class level stacked bar plot of taxa in the sulfur reducing bacteria (SRB and SRB_syn) guilds\
 -_Order = order level stacked bar plot, summarized by group, showing top 12 phyla, the rest are lumped into "Other"\
 -_Family = family level stacked bar plot, summarized by group, showing top 12 phyla, the rest are lumped into "Other"\
 -_Methano_samples = family level stacked bar plot of methanogens, showing individual samples\
@@ -41,3 +41,6 @@
 -_VennOTU = Venn diagram of OTUs\
 -_Multipatt_genus = multipatt indicator species analysis done at genus level\
 -_Multipatt = multipatt indicator species analysis done at OTU level\
+
+### Functional guilds key:
+
