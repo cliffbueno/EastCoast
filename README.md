@@ -18,10 +18,10 @@ NC = North Carolina (Alligator) project (lab incubation)\
 SC = South Carolina (Waccamaw) project (field experiment)\
 
 ### Figure name suffix key:
-_Alpha = alpha diversity, combined graph showing OTU richness and Shannon diversity\
-_Richness = OTU richness\
-_Shannon = Shannon diversity\
-_Clust = hierarchical clustering\
+_Alpha = alpha diversity, combined boxplot showing OTU richness and Shannon diversity\
+_Richness = OTU richness boxplot\
+_Shannon = Shannon diversity boxplot\
+_Clust = hierarchical clustering dendrogram\
 _PCoA_0.05 = Principle Coordinates Analysis of Bray-Curtis dissimilarity, only with taxa with at least 0.05% abundance\
 _PCoA = Principle Coordinates Analysis of Bray-Curtis dissimilarity\
 _BC = Bray-Curtis dissimilarities among different comparisons\
