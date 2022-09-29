@@ -898,7 +898,7 @@ sc$map_loaded <- sc$map_loaded %>%
 #### __Alpha ####
 leveneTest(sc$map_loaded$rich ~ sc$map_loaded$Treatment)
 m <- aov(rich ~ Treatment + Depth, data = sc$map_loaded)
-Anova(m, type = "III") # Treatment, not Depth
+Anova(m, type = "II") # Treatment, not Depth
 m <- aov(rich ~ Treatment, data = sc$map_loaded)
 shapiro.test(m$residuals)
 summary(m)
@@ -909,7 +909,7 @@ t <- emmeans(object = m, specs = "Treatment") %>%
            (max(sc$map_loaded$rich) - min(sc$map_loaded$rich))/20)
 leveneTest(sc$map_loaded$shannon ~ sc$map_loaded$Treatment)
 m1 <- aov(shannon ~ Treatment + Depth, data = sc$map_loaded)
-Anova(m1, type = "III") # Treatment, not Depth
+Anova(m1, type = "II") # Treatment, not Depth
 m1 <- aov(shannon ~ Treatment, data = sc$map_loaded)
 shapiro.test(m1$residuals)
 summary(m1)
@@ -1514,7 +1514,7 @@ nc$map_loaded <- nc$map_loaded %>%
 #### __Alpha ####
 leveneTest(nc$map_loaded$rich ~ nc$map_loaded$Treatment) # Homogeneous
 m <- aov(rich ~ Treatment + Depth, data = nc$map_loaded)
-Anova(m, type = "III") # Treatment and Depth
+Anova(m, type = "II") # Treatment and Depth
 m <- aov(rich ~ Treatment, data = nc$map_loaded)
 shapiro.test(m$residuals) # Not normal, but not too bad
 summary(m)
@@ -1524,7 +1524,7 @@ t <- emmeans(object = m, specs = "Treatment") %>%
          y = max(nc$map_loaded$rich)+(max(nc$map_loaded$rich)-min(nc$map_loaded$rich))/20)
 leveneTest(nc$map_loaded$shannon ~ nc$map_loaded$Treatment) # Homogeneous
 m1 <- aov(shannon ~ Treatment + Depth, data = nc$map_loaded)
-Anova(m1, type = "III") # Treatment and Depth
+Anova(m1, type = "II") # Treatment and Depth
 m1 <- aov(shannon ~ Treatment, data = nc$map_loaded)
 shapiro.test(m1$residuals) # Normal
 summary(m1)
@@ -2080,7 +2080,7 @@ defie$map_loaded <- defie$map_loaded %>%
 #### __Alpha ####
 leveneTest(defie$map_loaded$rich ~ defie$map_loaded$Salt) # Homogeneous
 m <- aov(rich ~ Salt + Depth, data = defie$map_loaded)
-Anova(m, type = "III") # Salt, not Depth
+Anova(m, type = "II") # Salt, not Depth
 m <- aov(rich ~ Salt, data = defie$map_loaded)
 shapiro.test(m$residuals) # Normal
 summary(m)
@@ -2090,7 +2090,7 @@ t <- emmeans(object = m, specs = "Salt") %>%
          y = max(defie$map_loaded$rich)+(max(defie$map_loaded$rich)-min(defie$map_loaded$rich))/20)
 leveneTest(defie$map_loaded$shannon ~ defie$map_loaded$Salt) # Homogeneous
 m1 <- aov(shannon ~ Salt + Depth, data = defie$map_loaded)
-Anova(m1, type = "III") # Salt, not Depth
+Anova(m1, type = "II") # Salt, not Depth
 m1 <- aov(shannon ~ Salt, data = defie$map_loaded)
 shapiro.test(m1$residuals) # Normal
 summary(m1)
@@ -2633,7 +2633,7 @@ deinc$map_loaded <- deinc$map_loaded %>%
 #### __Alpha ####
 leveneTest(deinc$map_loaded$rich ~ deinc$map_loaded$Treatment) # Homogeneous
 m <- aov(rich ~ Treatment + Depth, data = deinc$map_loaded)
-Anova(m, type = "III") # Neither
+Anova(m, type = "II") # Neither
 m <- aov(rich ~ Treatment, data = deinc$map_loaded)
 shapiro.test(m$residuals) # Normal
 summary(m)
@@ -2643,7 +2643,7 @@ t <- emmeans(object = m, specs = "Treatment") %>%
          y = max(deinc$map_loaded$rich)+(max(deinc$map_loaded$rich)-min(deinc$map_loaded$rich))/20)
 leveneTest(deinc$map_loaded$shannon ~ deinc$map_loaded$Treatment) # Not homogeneous
 m1 <- aov(shannon ~ Treatment + Depth, data = deinc$map_loaded)
-Anova(m1, type = "III") # Neither
+Anova(m1, type = "II") # Neither
 m1 <- aov(shannon ~ Treatment, data = deinc$map_loaded)
 shapiro.test(m1$residuals) # Normal
 summary(m1)
@@ -3128,20 +3128,22 @@ detra$map_loaded <- detra$map_loaded %>%
 #### __Alpha ####
 leveneTest(detra$map_loaded$rich ~ detra$map_loaded$Treatment) # Homogeneous
 m <- aov(rich ~ Treatment + Depth, data = detra$map_loaded)
-Anova(m, type = "III") # Treatment and Depth
+Anova(m, type = "II") # Treatment and Depth
 m <- aov(rich ~ Treatment, data = detra$map_loaded)
 shapiro.test(m$residuals) # Not normal
 summary(m)
+TukeyHSD(m)
 t <- emmeans(object = m, specs = "Treatment") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "rich",
          y = max(detra$map_loaded$rich)+(max(detra$map_loaded$rich)-min(detra$map_loaded$rich))/20)
 leveneTest(detra$map_loaded$shannon ~ detra$map_loaded$Treatment) # Homogeneous
 m1 <- aov(shannon ~ Treatment + Depth, data = detra$map_loaded)
-Anova(m1, type = "III") # Depth
+Anova(m1, type = "II") # Depth
 m1 <- aov(shannon ~ Treatment, data = detra$map_loaded)
 shapiro.test(m1$residuals)
 summary(m1)
+TukeyHSD(m1)
 t1 <- emmeans(object = m1, specs = "Treatment") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "shannon",
@@ -5263,12 +5265,12 @@ lab$map_loaded$EstSalt <- paste(lab$map_loaded$Estuary,
 #### __Alpha ####
 leveneTest(lab$map_loaded$rich ~ lab$map_loaded$Salt) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = lab$map_loaded)
-Anova(m, type = "III") # Estuary sig, salt and depth not sig.
+Anova(m, type = "II") # Estuary sig, salt and depth not sig.
 shapiro.test(m$residuals) # Almost normal
 
 leveneTest(lab$map_loaded$shannon ~ lab$map_loaded$Salt) # Homogenoeus
 m1 <- aov(shannon ~ Estuary + Salt + Depth, data = lab$map_loaded)
-Anova(m1, type = "III") # Estuary sig, salt and depth not sig.
+Anova(m1, type = "II") # Estuary sig, salt and depth not sig.
 shapiro.test(m1$residuals) # Not normal
 facet_df <- c("rich" = "(a) Richness",
               "shannon" = "(b) Shannon")
@@ -5844,12 +5846,12 @@ exp$map_loaded$EstSalt <- paste(exp$map_loaded$Estuary,
 #### __Alpha ####
 leveneTest(exp$map_loaded$rich ~ exp$map_loaded$Salt) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = exp$map_loaded)
-Anova(m, type = "III") # Salt sig, estuary and depth not sig
+Anova(m, type = "II") # Salt sig, estuary and depth not sig
 shapiro.test(m$residuals) # Normal
 
 leveneTest(exp$map_loaded$shannon ~ exp$map_loaded$Salt) # Homogenoeus
 m1 <- aov(shannon ~ Estuary + Salt + Depth, data = exp$map_loaded)
-Anova(m1, type = "III") # Salt sig, estuary and depth not sig
+Anova(m1, type = "II") # Salt sig, estuary and depth not sig
 shapiro.test(m1$residuals) # Not normal
 facet_df <- c("rich" = "(a) Richness",
               "shannon" = "(b) Shannon")
