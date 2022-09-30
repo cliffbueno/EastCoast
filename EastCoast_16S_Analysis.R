@@ -1545,7 +1545,7 @@ ggplot(alpha_long, aes(reorder(Treatment, value, mean), value,
   geom_text(data = label_df, aes(Treatment, y, label = str_trim(.group)), 
             size = 4, color = "black") +
   labs(x = "Site", y = "Number of OTUs", shape = "Depth (m)") +
-  scale_x_discrete(labels = c("+Salt +SO4", "+Salt", "+SO4", "Control", "Field")) +
+  scale_x_discrete(labels = c("+ASW", "+ASW (no SO4)", "+SO4", "Control", "Field")) +
   scale_colour_viridis_d() +
   guides(colour = "none") +
   facet_wrap(~ name, ncol = 2, scales = "free_y", labeller = as_labeller(facet_df)) +
@@ -1555,7 +1555,8 @@ ggplot(alpha_long, aes(reorder(Treatment, value, mean), value,
         legend.background = element_blank(),
         legend.title.align = 0.5,
         axis.title = element_blank(),
-        axis.text = element_text(size = 8),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 6),
         strip.text = element_text(size = 10))
 dev.off()
 
@@ -1580,9 +1581,12 @@ ggplot(nc$map_loaded, aes(Axis01, Axis02)) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = ""),
        shape = "Depth (m)") +
-  scale_colour_viridis_d() +
+  scale_colour_viridis_d(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW"),
+                         breaks = c("Field Reference", "DI_ctrl", "SO4 amended",
+                                    "SW_noSO4", "5ppt ASW")) +
   scale_fill_viridis_d() +
-  guides(colour = guide_legend(override.aes = list(shape = 15))) +
+  guides(colour = guide_legend(override.aes = list(shape = 15),
+                               order = 1)) +
   theme_bw() +  
   theme(legend.position = c(0,0),
         legend.justification = c(0,0),
@@ -1608,11 +1612,12 @@ ggplot(nc_barsP, aes(group_by, mean_value, fill = taxon)) +
   labs(x = "Sample", y = "Relative abundance", fill = "Phylum") +
   scale_fill_manual(values = c("grey90", brewer.pal(12, "Paired")[12:1])) +
   scale_y_continuous(expand = c(0.01, 0.01)) + 
-  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW", "+ASW +SO4")) +
+  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW")) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
-        axis.text = element_text(size = 10))
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8))
 dev.off()
 taxa_summary_by_sample_type(nc_phyla, nc$map_loaded, 'Treatment', 0.01, 'KW')
 
@@ -1633,11 +1638,12 @@ ggplot(nc_barsC, aes(group_by, mean_value, fill = taxon)) +
   labs(x = "Sample", y = "Relative abundance", fill = "Class") +
   scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[1:11])) +
   scale_y_continuous(expand = c(0.01, 0.01)) + 
-  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+Salt", "+Salt +SO4")) +
+  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW")) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
-        axis.text = element_text(size = 10))
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8))
 taxa_summary_by_sample_type(nc_class, nc$map_loaded, 'Treatment', 0.01, 'KW')
 
 nc_order <- summarize_taxonomy(nc, level = 4, report_higher_tax = F)
@@ -1657,11 +1663,12 @@ ggplot(nc_barsO, aes(group_by, mean_value, fill = taxon)) +
   labs(x = "Sample", y = "Relative abundance", fill = "Order") +
   scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[1:11])) +
   scale_y_continuous(expand = c(0.01, 0.01)) + 
-  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+Salt", "+Salt +SO4")) +
+  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW")) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
-        axis.text = element_text(size = 10))
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8))
 taxa_summary_by_sample_type(nc_order, nc$map_loaded, 'Treatment', 0.01, 'KW')
 
 nc_family <- summarize_taxonomy(nc, level = 5, report_higher_tax = F)
@@ -1681,11 +1688,12 @@ ggplot(nc_barsF, aes(group_by, mean_value, fill = taxon)) +
   labs(x = "Sample", y = "Relative abundance", fill = "Family") +
   scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[1:11])) +
   scale_y_continuous(expand = c(0.01, 0.01)) + 
-  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+Salt", "+Salt +SO4")) +
+  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW")) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
-        axis.text = element_text(size = 10))
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8))
 taxa_summary_by_sample_type(nc_family, nc$map_loaded, 'Treatment', 0.01, 'KW')
 
 nc_genus<- summarize_taxonomy(nc, level = 6, report_higher_tax = F)
@@ -1705,11 +1713,12 @@ ggplot(nc_barsG, aes(group_by, mean_value, fill = taxon)) +
   labs(x = "Sample", y = "Relative abundance", fill = "Genus") +
   scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[1:11])) +
   scale_y_continuous(expand = c(0.01, 0.01)) + 
-  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+Salt", "+Salt +SO4")) +
+  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW")) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
-        axis.text = element_text(size = 10))
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8))
 taxa_summary_by_sample_type(nc_genus, nc$map_loaded, 'Treatment', 0.01, 'KW')
 
 nc_guilds <- summarize_taxonomy(nc, level = 9, report_higher_tax = F)
@@ -1734,11 +1743,12 @@ ggplot(nc_barsGu, aes(group_by, mean_value, fill = taxon)) +
   labs(x = "Treatment", y = "Relative abundance", fill = "Guild") +
   scale_fill_manual(values = Guild_cols$color) +
   scale_y_continuous(expand = c(max(tallest_bar$sum)/100, max(tallest_bar$sum)/100)) + 
-  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW", "+ASW +SO4")) +
+  scale_x_discrete(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW")) +
   theme_classic() +
   theme(axis.title.y = element_text(face = "bold", size = 12),
         axis.title.x = element_blank(),
-        axis.text = element_text(size = 10))
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8))
 dev.off()
 taxa_summary_by_sample_type(nc_guilds, 
                             nc$map_loaded, 
@@ -1839,7 +1849,7 @@ multipatt_results <- nc_mp$sign %>%
   left_join(., nc$taxonomy_loaded, by = c("ASV" = "taxonomy8"))
 for (i in 1:nrow(multipatt_results)) {
   if (multipatt_results$num_sites[i] == 1 & multipatt_results$`s.5ppt ASW`[i] == 1) {
-    multipatt_results$Group[i] <- "+Salt +SO4"
+    multipatt_results$Group[i] <- "+ASW"
   }
 }
 for (i in 1:nrow(multipatt_results)) {
@@ -1859,13 +1869,13 @@ for (i in 1:nrow(multipatt_results)) {
 }
 for (i in 1:nrow(multipatt_results)) {
   if (multipatt_results$num_sites[i] == 1 & multipatt_results$s.SW_noSO4[i] == 1) {
-    multipatt_results$Group[i] <- "+Salt"
+    multipatt_results$Group[i] <- "+ASW (no SO4)"
   }
 }
 for (i in 1:nrow(multipatt_results)) {
   if (multipatt_results$num_sites[i] == 2 & multipatt_results$`s.5ppt ASW`[i] == 1 &
       multipatt_results$s.SW_noSO4[i] == 1) {
-    multipatt_results$Group[i] <- "+Salt, +Salt+SO4"
+    multipatt_results$Group[i] <- "+ASW, +ASW (no SO4)"
   }
 }
 table(multipatt_results$Group)
@@ -1876,25 +1886,25 @@ nc_mp_corrs <- as.data.frame(nc_mp$str) %>%
   dplyr::select(1:5, 9) %>%
   mutate(ASV = rownames(.)) %>%
   filter(ASV %in% multipatt_results$ASV) %>%
-  set_names(c("+Salt +SO4", "Control", "Field", "+SO4", "+Salt", "+Salt or +Salt+SO4", "ASV"))
+  set_names(c("+ASW", "Control", "Field", "+SO4", "+ASW (no SO4)", "+ASW or +ASW (no SO4)", "ASV"))
 # Add corrs and taxonomy
 multipatt_results <- multipatt_results %>%
-  filter(Group == "+Salt" | Group == "+Salt, +Salt+SO4" | Group == "+Salt+SO4" |
+  filter(Group == "+ASW (no SO4)" | Group == "+ASW, +ASW (no SO4)" | Group == "+ASW" |
            Group == "+SO4") %>%
   left_join(., nc_asv_all, by = "ASV") %>%
   left_join(., nc_mp_corrs, by = "ASV") %>%
-  dplyr::select(taxonomy2, taxonomy6, ASV, Group, "+Salt +SO4", "Control", "Field", "+SO4", "+Salt",
-                "+Salt or +Salt+SO4", "RelAbundance") %>%
+  dplyr::select(taxonomy2, taxonomy6, ASV, Group, "+ASW", "Control", "Field", "+SO4", "+ASW (no SO4)",
+                "+ASW or +ASW (no SO4)", "RelAbundance") %>%
   mutate(ASV = gsub("ASV", "OTU", ASV)) %>%
   arrange(Group, taxonomy2, taxonomy6) %>%
   mutate(ASV = factor(ASV, levels = ASV)) %>%
-  set_names(c("Phylum", "Genus", "ASV", "Group", "+Salt +SO4", "Control", "Field", "+SO4", "+Salt",
-              "+Salt+SO4/+Salt", "RelAbundance")) %>%
+  set_names(c("Phylum", "Genus", "ASV", "Group", "+ASW", "Control", "Field", "+SO4", "+ASW (no SO4)",
+              "+ASW/+ASW (no SO4)", "RelAbundance")) %>%
   mutate(taxon = paste(Phylum, Genus, ASV, sep = "; ")) %>%
   mutate(taxon = factor(taxon, levels = taxon))
 # Plot heatmap with abundance barplot
 hm.melted <- multipatt_results %>%
-  dplyr::select(taxon, Field, Control, "+SO4", "+Salt", "+Salt +SO4", "+Salt+SO4/+Salt") %>%
+  dplyr::select(taxon, Field, Control, "+SO4", "+ASW (no SO4)", "+ASW", "+ASW/+ASW (no SO4)") %>%
   melt(., id.vars = c("taxon"))
 hm <- ggplot(data = hm.melted, 
              aes(x = factor(taxon), y = variable, fill = value)) + 
@@ -1912,10 +1922,11 @@ hm <- ggplot(data = hm.melted,
   coord_flip()
 l <- get_legend(hm)
 hm.clean <- hm +
-  theme(axis.title.y = element_blank(), axis.text.y = element_text(margin = margin(c(0,-5,0,0))),
+  theme(axis.title.y = element_blank(), axis.text.y = element_text(margin = margin(c(0,-5,0,0)),
+                                                                   size = 7),
         axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), 
         panel.grid.major = element_blank(), legend.position="none",
-        axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-3,0))), 
+        axis.text.x.top = element_text(size = 5, margin = margin(c(0,0,-3,0))), 
         plot.margin = margin(c(0,-2,0,5))) +
   labs(y = "Group")
 bp.y <- ggplot(data = multipatt_results, aes(x = taxon, y = RelAbundance)) + 
@@ -1957,7 +1968,7 @@ nc_mp_results <- nc_mp$sign %>%
   left_join(., nc_tax, by = c("Genus" = "taxonomy6"))
 for (i in 1:nrow(nc_mp_results)) {
   if (nc_mp_results$num_sites[i] == 1 & nc_mp_results$`s.5ppt ASW`[i] == 1) {
-    nc_mp_results$Group[i] <- "+Salt +SO4"
+    nc_mp_results$Group[i] <- "+ASW"
   }
 }
 for (i in 1:nrow(nc_mp_results)) {
@@ -1977,13 +1988,13 @@ for (i in 1:nrow(nc_mp_results)) {
 }
 for (i in 1:nrow(nc_mp_results)) {
   if (nc_mp_results$num_sites[i] == 1 & nc_mp_results$s.SW_noSO4[i] == 1) {
-    nc_mp_results$Group[i] <- "+Salt"
+    nc_mp_results$Group[i] <- "+ASW (no SO4)"
   }
 }
 for (i in 1:nrow(nc_mp_results)) {
   if (nc_mp_results$num_sites[i] == 2 & nc_mp_results$`s.5ppt ASW`[i] == 1 &
       nc_mp_results$s.SW_noSO4[i] == 1) {
-    nc_mp_results$Group[i] <- "+Salt, +Salt+SO4"
+    nc_mp_results$Group[i] <- "+ASW, +ASW (no SO4)"
   }
 }
 table(nc_mp_results$Group)
@@ -1993,24 +2004,24 @@ nc_mp_corrs <- as.data.frame(nc_mp$str) %>%
   dplyr::select(1:5, 9) %>%
   mutate(Genus = rownames(.)) %>%
   filter(Genus %in% nc_mp_results$Genus) %>%
-  set_names(c("+Salt +SO4", "Control", "Field", "+SO4", "+Salt", "+Salt or +Salt+SO4", "Genus"))
+  set_names(c("+ASW", "Control", "Field", "+SO4", "+ASW (no SO4)", "+ASW or +ASW (no SO4)", "Genus"))
 # Add corrs and taxonomy
 nc_mp_results <- nc_mp_results %>%
-  filter(Group == "+Salt" | Group == "+Salt, +Salt+SO4" | Group == "+Salt +SO4" |
+  filter(Group == "+ASW (no SO4)" | Group == "+ASW, +ASW (no SO4)" | Group == "+ASW" |
            Group == "+SO4") %>%
   left_join(., nc_genus_all, by = "Genus") %>%
   left_join(., nc_mp_corrs, by = "Genus") %>%
-  dplyr::select(taxonomy2, Genus, Group, "+Salt +SO4", "Control", "Field", "+SO4", "+Salt",
-                "+Salt or +Salt+SO4", "RelAbundance") %>%
+  dplyr::select(taxonomy2, Genus, Group, "+ASW", "Control", "Field", "+SO4", "+ASW (no SO4)",
+                "+ASW or +ASW (no SO4)", "RelAbundance") %>%
   arrange(Group, taxonomy2) %>%
   mutate(Genus = factor(Genus, levels = Genus)) %>%
-  set_names(c("Phylum", "Genus", "Group", "+Salt +SO4", "Control", "Field", "+SO4", "+Salt",
-              "+Salt+SO4/+Salt", "RelAbundance")) %>%
+  set_names(c("Phylum", "Genus", "Group", "+ASW", "Control", "Field", "+SO4", "+ASW (no SO4)",
+              "+ASW/+ASW (no SO4)", "RelAbundance")) %>%
   mutate(taxon = paste(Phylum, Genus, sep = "; ")) %>%
   mutate(taxon = factor(taxon, levels = taxon))
 # Plot heatmap with abundance barplot
 nc.hm.melted <- nc_mp_results %>%
-  dplyr::select(taxon, Field, Control, "+SO4", "+Salt", "+Salt +SO4", "+Salt+SO4/+Salt") %>%
+  dplyr::select(taxon, Field, Control, "+SO4", "+ASW (no SO4)", "+ASW", "+ASW/+ASW (no SO4)") %>%
   melt(., id.vars = c("taxon"))
 nc.hm <- ggplot(data = nc.hm.melted, 
                 aes(x = factor(taxon), y = variable, fill = value)) + 
@@ -2028,10 +2039,11 @@ nc.hm <- ggplot(data = nc.hm.melted,
   coord_flip()
 nc.l <- get_legend(nc.hm)
 nc.hm.clean <- nc.hm +
-  theme(axis.title.y = element_blank(), axis.text.y = element_text(margin = margin(c(0,-5,0,0))),
+  theme(axis.title.y = element_blank(), axis.text.y = element_text(margin = margin(c(0,-5,0,0)),
+                                                                   size = 6),
         axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), 
         panel.grid.major = element_blank(), legend.position="none",
-        axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-2,0))), 
+        axis.text.x.top = element_text(size = 5, margin = margin(c(0,0,-2,0))), 
         plot.margin = margin(c(0,-2,0,5))) +
   labs(y = "Group")
 nc.bp.y <- ggplot(data = nc_mp_results, aes(x = taxon, y = RelAbundance)) + 
@@ -5644,6 +5656,94 @@ ggplot(lab_barsMethano, aes(group_by, mean_value, fill = taxon)) +
         strip.background = element_rect(size = 0.2),
         axis.line.y = element_blank())
 dev.off()
+
+# Delve into Methanobacteriaceae result
+# Check methanogen family raw counts
+tax_sum_families_meth <- summarize_taxonomy(lab, level = 5, 
+                                            report_higher_tax = F,
+                                            relative = F)
+tax_sum_families_meth <- tax_sum_families_meth[grep("(Methano|Methermicoccaceae|
+                                                    Syntrophoarchaeaceae)", 
+                                                    rownames(tax_sum_families_meth)),]
+tax_sum_families_meth <- tax_sum_families_meth[!grepl("Methanoperedenaceae", 
+                                                      rownames(tax_sum_families_meth)),]
+
+# Check Methanobacteriaceae genera
+lab_Methanobacteriaceae <- filter_taxa_from_input(lab,
+                                                  taxa_to_keep = c("Methanobacteriaceae"),
+                                                  at_spec_level = 5)
+Methanobacteriaceae_wTax <- summarize_taxonomy(lab_Methanobacteriaceae, 
+                                               level = 6, 
+                                               report_higher_tax = T, 
+                                               relative = FALSE)
+# There are two genera (Methanobacterium and Methanosphaera) and NA
+rownames(Methanobacteriaceae_wTax) <- substring(rownames(Methanobacteriaceae_wTax), 62)
+nb.cols <- nrow(Methanobacteriaceae_wTax)
+mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(nb.cols)
+lab_barsMethanobacteriaceae <- plot_taxa_bars(Methanobacteriaceae_wTax, 
+                                              lab$map_loaded, 
+                                              "EstSalt", 
+                                              num_taxa = nrow(Methanobacteriaceae_wTax), 
+                                              data_only = T) %>%
+  mutate(mean_value = mean_value/26429) %>%
+  separate(group_by, into = c("Estuary", "Salt"), sep = "_") %>%
+  mutate(Salt = fct_rev(Salt))
+tallest_bar <- lab_barsMethanobacteriaceae %>%
+  group_by(Estuary, Salt) %>%
+  summarise(sum = sum(mean_value))
+pdf("InitialFigs/Comb_Lab_Methanobacteriaceae_Genera.pdf", width = 7, height = 5)
+ggplot(lab_barsMethanobacteriaceae, aes(Salt, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = NULL, y = "Relative abundance", fill = "Genus") +
+  scale_fill_manual(values = mycolors) +
+  scale_y_continuous(expand = c(max(tallest_bar$sum)/100, max(tallest_bar$sum)/100)) + 
+  facet_wrap(~ Estuary) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        strip.background = element_rect(size = 0.2),
+        axis.line.y = element_blank())
+dev.off()
+
+# Now also check OTU level
+Methanobacteriaceae_wTax <- summarize_taxonomy(lab_Methanobacteriaceae, 
+                                               level = 8, 
+                                               report_higher_tax = T, 
+                                               relative = FALSE)
+rownames(Methanobacteriaceae_wTax) <- substring(rownames(Methanobacteriaceae_wTax), 62)
+# Replace ASV with OTU in figure to avoid confusion
+rownames(Methanobacteriaceae_wTax) <- str_replace(rownames(Methanobacteriaceae_wTax), "ASV", "OTU")
+nb.cols <- nrow(Methanobacteriaceae_wTax)
+mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(nb.cols)
+lab_barsMethanobacteriaceae <- plot_taxa_bars(Methanobacteriaceae_wTax, 
+                                              lab$map_loaded, 
+                                              "EstSalt", 
+                                              num_taxa = nrow(Methanobacteriaceae_wTax), 
+                                              data_only = T) %>%
+  mutate(mean_value = mean_value/26429) %>%
+  separate(group_by, into = c("Estuary", "Salt"), sep = "_") %>%
+  mutate(Salt = fct_rev(Salt))
+tallest_bar <- lab_barsMethanobacteriaceae %>%
+  group_by(Estuary, Salt) %>%
+  summarise(sum = sum(mean_value))
+pdf("InitialFigs/Comb_Lab_Methanobacteriaceae_OTUs.pdf", width = 7, height = 5)
+ggplot(lab_barsMethanobacteriaceae, aes(Salt, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = NULL, y = "Relative abundance", fill = "Family; Genus; Species; OTU ID") +
+  scale_fill_manual(values = mycolors) +
+  scale_y_continuous(expand = c(max(tallest_bar$sum)/100, max(tallest_bar$sum)/100)) + 
+  facet_wrap(~ Estuary) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        strip.background = element_rect(size = 0.2),
+        axis.line.y = element_blank())
+dev.off()
+
 
 #### __Desulfo ####
 # Subset taxa to SRB and SRB_syn guilds
