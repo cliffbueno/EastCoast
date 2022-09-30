@@ -5741,7 +5741,9 @@ ggplot(lab_barsMethanobacteriaceae, aes(Salt, mean_value, fill = taxon)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
         strip.background = element_rect(size = 0.2),
-        axis.line.y = element_blank())
+        axis.line.y = element_blank(),
+        legend.key.size = unit(0.5, "cm"),
+        legend.text = element_text(size = 10))
 dev.off()
 
 
