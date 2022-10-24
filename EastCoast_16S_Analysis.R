@@ -366,6 +366,13 @@ input_filt_rare$map_loaded$shannon <- diversity(input_filt_rare$data_loaded,
 # Save
 saveRDS(input_filt_rare, "input_filt_rare_comb.rds")
 
+#### _Biogeochemistry ####
+# Received biogeochem data later but need to wrangle it and merge it
+# Need to get the data for each sampleID that was sequenced
+# Need get set of same variables and get into same units
+biogeochem <- read.csv("biogeochem_all_clean.csv")
+
+
 
 
 #### ...................................... ####
