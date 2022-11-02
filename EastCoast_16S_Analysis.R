@@ -92,31 +92,32 @@ library(ggpubr) # graphs
 library(ggExtra) # graphs
 library(ggh4x) # graphs
 library(dendextend) # graphs
+library(corrplot) # correlation plots
 
 # Functions
 find_hull <- function(df) df[chull(df$Axis01, df$Axis02),]
 `%notin%` <- Negate(`%in%`)
 paste_ranks = function(sm_taxa){
-  k = data.frame(k ="k__", sm_taxa['taxonomy1'])
+  k = data.frame(k ="k_", sm_taxa['taxonomy1'])
   k2 <- do.call(paste, c(k, sep = ""))
   
-  p = data.frame(k ="p__", sm_taxa['taxonomy2'])
+  p = data.frame(k ="p_", sm_taxa['taxonomy2'])
   p2 <- do.call(paste, c(p, sep = ""))
   
-  c = data.frame(k ="c__", sm_taxa['taxonomy3'])
+  c = data.frame(k ="c_", sm_taxa['taxonomy3'])
   c2 <- do.call(paste, c(c, sep = ""))
   
-  o = data.frame(k ="o__", sm_taxa['taxonomy4'])
+  o = data.frame(k ="o_", sm_taxa['taxonomy4'])
   o2 <- do.call(paste, c(o, sep = ""))
   
-  f = data.frame(k ="f__", sm_taxa['taxonomy5'])
+  f = data.frame(k ="f_", sm_taxa['taxonomy5'])
   f2 <- do.call(paste, c(f, sep = ""))
   
-  g = data.frame(k ="g__", sm_taxa['taxonomy6'])
+  g = data.frame(k ="g_", sm_taxa['taxonomy6'])
   g2 <- do.call(paste, c(g, sep = ""))
   
   # NOT USING SPECIES HERE! OTU preprocessing doesn't!
-  s = data.frame(k ="s__", sm_taxa['taxonomy7'])
+  s = data.frame(k ="s_", sm_taxa['taxonomy7'])
   s2 <- do.call(paste, c(s, sep = ""))
   
   # combine all
@@ -127,6 +128,10 @@ paste_ranks = function(sm_taxa){
 
 # Guild subsetting module from other repository
 source("~/Documents/GitHub/SF_microbe_methane/modules/3_OTU_subsetting_modules_v.0.4_strip.r")
+
+# Correlations
+source("~/Documents/GitHub/EastCoast/meth_corr_by_taxonomy.R")
+source("~/Documents/GitHub/EastCoast/meth_corr_by_bgc.R")
 
 # Repository path
 setwd("~/Documents/GitHub/EastCoast/")
@@ -344,6 +349,18 @@ ANME.2 <- input_filt$taxonomy_loaded[grepl("ANME",
                                            input_filt$taxonomy_loaded$taxonomy9),]
 ANME$OTU %in% ANME.2$taxonomy8
 
+# OTU Richness
+input_filt$map_loaded$rich <- specnumber(input_filt$data_loaded, 
+                                         MARGIN = 2)
+
+# Shannon diversity
+input_filt$map_loaded$shannon <- diversity(input_filt$data_loaded, 
+                                           index = "shannon", 
+                                           MARGIN = 2)
+
+# Save
+saveRDS(input_filt, "input_filt_comb.rds")
+
 # Rarefy at 26429
 sort(colSums(input_filt$data_loaded))
 mean(colSums(input_filt$data_loaded))
@@ -367,11 +384,53 @@ input_filt_rare$map_loaded$shannon <- diversity(input_filt_rare$data_loaded,
 saveRDS(input_filt_rare, "input_filt_rare_comb.rds")
 
 #### _Biogeochemistry ####
-# Received biogeochem data later but need to wrangle it and merge it
-# Need to get the data for each sampleID that was sequenced
-# Need get set of same variables and get into same units
-biogeochem <- read.csv("biogeochem_all_clean.csv")
+# Received biogeochemical data later
+# Wrangled it in Excel and in PrepBiogeochem.R
+# Got sampleID to each row so can merge here
+# Reinput the old files and save new files with BGC data
+# Make sure to set rownames! dplyr loses them...
+biogeochem <- read.csv("biogeochem_all_clean.csv") %>%
+  dplyr::select(-X, -Estuary, -Salinity_calcd_ppt, -Salinity)
 
+input_filt_rare <- readRDS("input_filt_rare.rds")
+nrow(input_filt_rare$map_loaded) # 177
+input_filt_rare_wBGC <- input_filt_rare
+input_filt_rare_wBGC$map_loaded <- input_filt_rare_wBGC$map_loaded %>%
+  mutate(sampleID = rownames(.)) %>%
+  left_join(., biogeochem, by = "sampleID")
+rownames(input_filt_rare_wBGC$map_loaded) <- input_filt_rare_wBGC$map_loaded$sampleID
+nrow(input_filt_rare_wBGC$map_loaded) # 177
+saveRDS(input_filt_rare_wBGC, "input_filt_rare_wBGC.rds")
+
+input_filt <- readRDS("input_filt.rds")
+nrow(input_filt$map_loaded)
+input_filt_wBGC <- input_filt
+input_filt_wBGC$map_loaded <- input_filt_wBGC$map_loaded %>%
+  mutate(sampleID = rownames(.)) %>%
+  left_join(., biogeochem, by = "sampleID")
+rownames(input_filt_wBGC$map_loaded) <- input_filt_wBGC$map_loaded$sampleID
+nrow(input_filt_wBGC$map_loaded) # 177
+saveRDS(input_filt_wBGC, "input_filt_wBGC.rds")
+
+input_filt_comb <- readRDS("input_filt_comb.rds")
+nrow(input_filt_comb$map_loaded)
+input_filt_comb_wBGC <- input_filt_comb
+input_filt_comb_wBGC$map_loaded <- input_filt_comb_wBGC$map_loaded %>%
+  mutate(sampleID = rownames(.)) %>%
+  left_join(., biogeochem, by = "sampleID")
+rownames(input_filt_comb_wBGC$map_loaded) <- input_filt_comb_wBGC$map_loaded$sampleID
+nrow(input_filt_comb_wBGC$map_loaded) # 345
+saveRDS(input_filt_comb_wBGC, "input_filt_comb_wBGC.rds")
+
+input_filt_rare_comb <- readRDS("input_filt_rare_comb.rds")
+nrow(input_filt_rare_comb$map_loaded)
+input_filt_rare_comb_wBGC <- input_filt_rare_comb
+input_filt_rare_comb_wBGC$map_loaded <- input_filt_rare_comb_wBGC$map_loaded %>%
+  mutate(sampleID = rownames(.)) %>%
+  left_join(., biogeochem, by = "sampleID")
+rownames(input_filt_rare_comb_wBGC$map_loaded) <- input_filt_rare_comb_wBGC$map_loaded$sampleID
+nrow(input_filt_rare_comb_wBGC$map_loaded) # 177
+saveRDS(input_filt_rare_comb_wBGC, "input_filt_rare_comb_wBGC.rds")
 
 
 
@@ -542,7 +601,7 @@ anova(betadisper(bc, input_filt_rare$map_loaded$Depth)) # Dispersion not homogen
 # Prelim exploration but don't save anything. 
 # Will redo with SF Bay data included and save figures
 
-#### __Indicators ####
+#### _Indicators ####
 sim <- simper(t(input_filt_rare$data_loaded), 
               input_filt_rare$map_loaded$Experiment)
 s <- summary(sim)
@@ -557,7 +616,7 @@ mp <- multipatt(t(input_filt_rare$data_loaded),
                 control = how(nperm=999))
 summary(mp)
 
-#### __Domain ####
+#### _Domain ####
 tax_sum_domain <- summarize_taxonomy(input_filt_rare, level = 1, 
                                      report_higher_tax = F)
 plot_ts_heatmap(tax_sum_domain, 
@@ -587,7 +646,7 @@ taxa_summary_by_sample_type(tax_sum_domain,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Phylum ####
+#### _Phylum ####
 tax_sum_phyla <- summarize_taxonomy(input_filt_rare, level = 2, 
                                     report_higher_tax = F)
 plot_ts_heatmap(tax_sum_phyla, 
@@ -638,7 +697,7 @@ ggplot(bars_ar, aes(group_by, mean_value, fill = taxon)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 
-#### __Class ####
+#### _Class ####
 tax_sum_class <- summarize_taxonomy(input_filt_rare, level = 4, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_class, 
                 input_filt_rare$map_loaded, 
@@ -693,7 +752,7 @@ ggplot(bars_su, aes(group_by, mean_value, fill = taxon)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 
-#### __Order ####
+#### _Order ####
 tax_sum_order <- summarize_taxonomy(input_filt_rare, level = 5, 
                                        report_higher_tax = FALSE)
 plot_ts_heatmap(tax_sum_order, 
@@ -723,7 +782,7 @@ taxa_summary_by_sample_type(tax_sum_order,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Family ####
+#### _Family ####
 tax_sum_families <- summarize_taxonomy(input_filt_rare, level = 5, 
                                        report_higher_tax = FALSE)
 plot_ts_heatmap(tax_sum_families, 
@@ -781,7 +840,7 @@ ggplot(bars_meth, aes(group_by, mean_value, fill = taxon)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 
-#### __Genus ####
+#### _Genus ####
 tax_sum_genera <- summarize_taxonomy(input_filt_rare, level = 6, report_higher_tax = T)
 plot_ts_heatmap(tax_sum_genera, 
                 input_filt_rare$map_loaded, 
@@ -810,7 +869,7 @@ taxa_summary_by_sample_type(tax_sum_genera,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Guilds ####
+#### _Guilds ####
 tax_sum_guilds <- summarize_taxonomy(input_filt_rare, level = 9, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_guilds, 
                 input_filt_rare$map_loaded, 
@@ -847,7 +906,7 @@ taxa_summary_by_sample_type(tax_sum_guilds,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Venn ####
+#### _Venn ####
 phy <- summarize_taxonomy(input_filt_rare, level = 2, report_higher_tax = F)
 cla <- summarize_taxonomy(input_filt_rare, level = 3, report_higher_tax = F)
 ord <- summarize_taxonomy(input_filt_rare, level = 4, report_higher_tax = F)
@@ -889,7 +948,8 @@ plot_grid(plot_venn_diagram(input_phylum, "Estuary", 0.00000000000000001),
 
 
 #### _South Carolina ####
-input_filt <- readRDS("input_filt.rds")
+# input_filt <- readRDS("input_filt.rds")
+input_filt <- readRDS("input_filt_wBGC.rds")
 sc <- filter_data(input_filt,
                   filter_cat = "Estuary",
                   keep_vals = "Waccamaw")
@@ -1218,7 +1278,7 @@ ggplot(sc_barsGu, aes(group_by, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __ Simper ####
+#### __Simper ####
 sc_sim <- simper(t(sc$data_loaded), 
                  sc$map_loaded$TrtDepth)
 sc_s <- summary(sc_sim)
@@ -1496,10 +1556,116 @@ plot_grid(sc.hm.clean, sc.bp.y, sc.l, NULL, nrow = 2, ncol = 2,
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
 
+#### __BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note only BGC for D2 samples in SC
+
+# Get variables
+env <- sc$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, CH4_pw_air_ppmv,
+                CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
+                N2_umol_m2_h,	SOD_umol_m2_h, NO3_umol_m2_h,	NH4_umol_m2_h, SRP_umol_m2_h, DON_umol_m2_h,
+                Conductivity_uS_cm, Salinity_ppt_all, DIC_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg, pH)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/SC_BGC_CH4.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(sc_bc, k = nrow(sc$map_loaded) - 1, eig = T)
+set.seed(105)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.2
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+mutate(Dim1 = Dim1 * manual_factor,
+       Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "Conductivity_uS_cm") %>%
+  mutate(shortnames = c("CO2", "N2", "SOD", "Salinity", "N", "C:N", "pH"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+plot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+sc$map_loaded$Axis01 <- scores(pcoa)[,1]
+sc$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(sc$map_loaded, c("TrtDepth"), find_hull)
+g <- ggplot(sc$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = TrtDepth, fill = TrtDepth),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 1, aes(colour = TrtDepth, shape = TrtDepth),
+             show.legend = F) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3.5, color = "black") +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = "")) +
+  scale_colour_manual(values = c("#440154FF", "#440154FF", "#21908CFF", 
+                                 "#21908CFF", "#FDE725FF", "#FDE725FF")) +
+  scale_fill_manual(values = c("#440154FF", "#440154FF", "#21908CFF", 
+                               "#21908CFF", "#FDE725FF", "#FDE725FF")) +
+  scale_shape_manual(values = c(16,17,16,17,16,17)) +
+  coord_fixed() +
+  theme_bw() +  
+  theme(legend.position = "none",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10),
+        plot.margin = margin(5, -5, 5, 5, "pt"))
+g
+leg <- get_legend(ggplot(sc$map_loaded, aes(Axis01, Axis02)) +
+                    geom_point(size = 3, alpha = 1, aes(colour = Treatment, shape = Depth)) +
+                    theme_bw() +
+                    scale_colour_viridis_d(labels = c("Control", "+Freshwater", "+Saltwater"),
+                                           guide = guide_legend(reverse = T,
+                                                                override.aes = list(shape = 15))) +
+                    labs(shape = "Depth (m)"))
+pdf("InitialFigs/SC_PCoA_wBGC.pdf", width = 6, height = 4)
+plot_grid(g, leg, rel_widths = c(3.5, 1))
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(sc$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # SOD and CO2
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+meth_corr_by_taxonomy(input = sc, level = 2, threshold = 0.5)
+meth_corr_by_taxonomy(input = sc, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = sc, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = sc, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = sc, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = sc, level = 8, threshold = 0.5)
+pdf("InitialFigs/SC_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = sc, level = 9, threshold = 0)
+dev.off()
+
 
 
 #### _North Carolina ####
-input_filt <- readRDS("input_filt.rds")
+# input_filt <- readRDS("input_filt.rds")
+input_filt <- readRDS("input_filt_wBGC.rds")
 nc <- filter_data(input_filt,
                   filter_cat = "Estuary",
                   keep_vals = "Alligator")
@@ -2069,12 +2235,119 @@ plot_grid(nc.hm.clean, nc.bp.y, nc.l, NULL, nrow = 2, ncol = 2,
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
 
+#### __BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note only BGC for D2 samples in SC
+
+# Get variables
+env <- nc$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, N2O_ug_m2_h, Salinity_ppt_all, 
+                TOC_mgL, TN_mgL, NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL, Br_mgL, NO3_mgL,
+                DIN_mgL, DON_mgL)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/NC_BGC_CH4.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(nc_bc, k = nrow(nc$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.4
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "Cl_mgL") %>%
+  mutate(shortnames = c("CH4", "CO2", "N2O", "Salinity", "NH4", "Br"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+nc$map_loaded$Axis01 <- scores(pcoa)[,1]
+nc$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(nc$map_loaded, c("Treatment"), find_hull)
+g <- ggplot(nc$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Treatment, fill = Treatment),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 1, aes(colour = Treatment, shape = Depth)) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (m)") +
+  scale_colour_viridis_d(labels = c("Field", "Control", "+SO4", "+ASW (no SO4)", "+ASW"),
+                         breaks = c("Field Reference", "DI_ctrl", "SO4 amended",
+                                    "SW_noSO4", "5ppt ASW")) +
+  scale_fill_viridis_d() +
+  guides(colour = guide_legend(override.aes = list(shape = 15),
+                               order = 1)) +
+  coord_fixed() +
+  theme_bw() +  
+  theme(legend.position = c(0,0),
+        legend.justification = c(0,0),
+        legend.background = element_blank(),
+        legend.key.size = unit(0.5, "cm"),
+        legend.margin = margin(2,2,2,2, "pt"),
+        legend.spacing.y = unit(0, "cm"),
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10),
+        plot.margin = margin(5, 5, 5, 5, "pt")) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = subset(vec.df, shortnames != "Salinity"),
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3, color = "black") +
+  geom_text(data = subset(vec.df, shortnames == "Salinity"),
+            aes(x = Dim1 - 0.03, y = Dim2, label = shortnames),
+            size = 3, color = "black")
+g
+pdf("InitialFigs/NC_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(nc$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # TN, N2O
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/NC_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = nc, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = nc, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = nc, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = nc, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = nc, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = nc, level = 8, threshold = 0.5)
+pdf("InitialFigs/NC_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = nc, level = 9, threshold = 0)
+dev.off()
+
 
 
 #### _Delaware field ####
 # Delaware field (3 sites, Weston et al. 2014)
 # Tidal freshwater, oligohaline, mesohaline
-input_filt <- readRDS("input_filt.rds")
+# input_filt <- readRDS("input_filt.rds")
+input_filt <- readRDS("input_filt_wBGC.rds")
 defie <- filter_data(input_filt,
                      filter_cat = "Estuary",
                      keep_vals = "Delaware")
@@ -2163,7 +2436,8 @@ ggplot(defie$map_loaded, aes(Axis01, Axis02)) +
   geom_point(size = 3, alpha = 1, aes(colour = Salt, shape = Depth),
              show.legend = T) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
-       y = paste("PC2: ", pcoaA2, "%", sep = "")) +
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (m)") +
   scale_fill_viridis_d() +
   scale_colour_viridis_d() +
   theme_bw() +  
@@ -2563,6 +2837,90 @@ dev.off()
 
 
 
+#### __BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, no GHG flux for Delaware field samples
+
+# Get variables
+env <- defie$map_loaded %>%
+  dplyr::select(Salinity_ppt_all, 
+                NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
+                Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+pdf("InitialFigs/DEfie_BGC_corr.pdf", width = 7, height = 5)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(defie_bc, k = nrow(defie$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.45
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "Cl_mgL") %>%
+  mutate(shortnames = c("Salinity", "NH4", "PO4", "SO4", "Fe", "SR"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+defie$map_loaded$Axis01 <- scores(pcoa)[,1]
+defie$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(defie$map_loaded, c("Salt"), find_hull)
+g <- ggplot(defie$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Salt, fill = Salt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 1, aes(colour = Salt, shape = Depth),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (m)",
+       colour = "Salinity",
+       fill = "Salinity") +
+  scale_fill_viridis_d() +
+  scale_colour_viridis_d(guide = guide_legend(override.aes = list(shape = 15))) +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3.5, color = "black") +
+  coord_fixed()
+g
+pdf("InitialFigs/DEfie_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(defie$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # Cl
+
+
+
 #### _Delaware inc ####
 input_filt_rare <- readRDS("input_filt.rds")
 deinc <- filter_data(input_filt_rare,
@@ -2601,8 +2959,9 @@ ggplotly(ggplot(deinc$map_loaded, aes(Axis01, Axis02)) +
 
 # Looks like there are two outliers and potentially 2 with depths mixed up!
 # Restart
-input_filt_rare <- readRDS("input_filt.rds")
-deinc <- filter_data(input_filt_rare,
+# input_filt <- readRDS("input_filt.rds")
+input_filt <- readRDS("input_filt_wBGC.rds")
+deinc <- filter_data(input_filt,
                      filter_cat = "Estuary",
                      keep_vals = "Delaware")
 deinc <- filter_data(deinc,
@@ -3112,8 +3471,92 @@ dev.off()
 
 
 
+#### __BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, no data for Delware inc yet, but get set up.
+
+# Get variables
+env <- deinc$map_loaded %>%
+  dplyr::select(Salinity_ppt_all, 
+                NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
+                Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+pdf("InitialFigs/DEinc_BGC_corr.pdf", width = 7, height = 5)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(deinc_bc, k = nrow(deinc$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.45
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "Cl_mgL") %>%
+  mutate(shortnames = c("Salinity", "NH4", "PO4", "SO4", "Fe", "SR"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+deinc$map_loaded$Axis01 <- scores(pcoa)[,1]
+deinc$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(deinc$map_loaded, c("Salt"), find_hull)
+g <- ggplot(deinc$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Salt, fill = Salt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 1, aes(colour = Salt, shape = Depth),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (m)",
+       colour = "Salinity") +
+  scale_fill_viridis_d() +
+  scale_colour_viridis_d() +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3.5, color = "black") +
+  coord_fixed()
+g
+pdf("InitialFigs/DEinc_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(defie$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova #
+
+
+
 #### _Delaware transplant ####
-input_filt <- readRDS("input_filt.rds")
+# input_filt <- readRDS("input_filt.rds")
+input_filt <- readRDS("input_filt_wBGC.rds")
 detra <- filter_data(input_filt,
                      filter_cat = "Estuary",
                      keep_vals = "Delaware")
@@ -3472,7 +3915,7 @@ ggplot(detra_barsGu, aes(group_by, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __ Simper ####
+#### __Simper ####
 detra_sim <- simper(t(detra$data_loaded), 
                     detra$map_loaded$Treatment)
 detra_s <- summary(detra_sim)
@@ -3690,8 +4133,740 @@ dev.off()
 
 
 
+#### __BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+
+# Get variables
+env <- detra$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, N2O_ug_m2_h, 
+                Salinity_ppt_all, 
+                NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
+                Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/DEtra_BGC_CH4.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(detra_bc, k = nrow(detra$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.5
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "Cl_mgL") %>%
+  mutate(shortnames = c("Salinity", "SO4", "Porosity", "SR"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+detra$map_loaded$Axis01 <- scores(pcoa)[,1]
+detra$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(detra$map_loaded, c("Treatment"), find_hull)
+g <- ggplot(detra$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Treatment, fill = Treatment),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 1, aes(colour = Treatment, shape = Depth)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3.5, color = "black") +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (m)") +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() +
+  guides(colour = guide_legend(override.aes = list(shape = 15),
+                               order = 1)) +
+  coord_fixed() +
+  theme_bw() +  
+  theme(legend.position = "right",
+        legend.background = element_blank(),
+        legend.key.size = unit(0.4, "cm"),
+        legend.margin = margin(2,2,2,2, "pt"),
+        legend.spacing.y = unit(0, "cm"),
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10),
+        plot.margin = margin(5, 5, 5, 5, "pt"))
+g
+pdf("InitialFigs/DEtra_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+ggplotly(g)
+
+# Ordistep
+comm_nona <- as.data.frame(t(detra$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # Salinity
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/DEtra_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = detra, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = detra, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 8, threshold = 0.5)
+pdf("InitialFigs/DEtra_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = detra, level = 9, threshold = 0)
+dev.off()
+
+
+
 #### ...................................... ####
-#### 5. Comparison Overview ####
+#### 6. SF ####
+# input_filt <- readRDS("input_filt.rds")
+input_filt <- readRDS("input_filt_comb_wBGC.rds")
+sf <- filter_data(input_filt,
+                  filter_cat = "Estuary",
+                  keep_vals = "SF")
+sort(colSums(sf$data_loaded))
+mean(colSums(sf$data_loaded))
+se(colSums(sf$data_loaded))
+# Rarefy at 65222
+# Drop Sandmound_TuleB_D1 (1296 reads) and Muzzi_PWB_D2 (5287 reads)
+set.seed(530)
+sf <- single_rarefy(sf, 65222)
+sf$map_loaded <- sf$map_loaded %>%
+  mutate(rich = specnumber(sf$data_loaded, MARGIN = 2),
+         shannon = diversity(sf$data_loaded, index = "shannon", MARGIN = 2),
+         Salt = NA,
+         Depth = as.factor(Depth)) %>%
+  mutate_if(is.character, as.factor)
+
+# Add column for Salt
+for (i in 1:nrow(sf$map_loaded)) {
+  if (sf$map_loaded$Site[i] == "Sandmound" | sf$map_loaded$Site[i] == "West Pond") {
+    sf$map_loaded$Salt[i] <- "Freshwater"
+  }
+}
+for (i in 1:nrow(sf$map_loaded)) {
+  if (sf$map_loaded$Site[i] == "Mayberry" | sf$map_loaded$Site[i] == "Browns") {
+    sf$map_loaded$Salt[i] <- "Oligohaline"
+  }
+}
+for (i in 1:nrow(sf$map_loaded)) {
+  if (sf$map_loaded$Site[i] == "Joice" | sf$map_loaded$Site[i] == "Rush Ranch") {
+    sf$map_loaded$Salt[i] <- "Mesohaline"
+  }
+}
+for (i in 1:nrow(sf$map_loaded)) {
+  if (sf$map_loaded$Site[i] == "Goodyear" | sf$map_loaded$Site[i] == "White Slough" |
+      sf$map_loaded$Site[i] == "Tolay" | sf$map_loaded$Site[i] == "China Camp" |
+      sf$map_loaded$Site[i] == "Muzzi") {
+    sf$map_loaded$Salt[i] <- "Polyhaline"
+  }
+}
+sf$map_loaded <- sf$map_loaded %>%
+  mutate(Salt = factor(Salt,
+                       levels = c("Freshwater", "Oligohaline", 
+                                  "Mesohaline", "Polyhaline")))
+
+#### __Alpha ####
+leveneTest(sf$map_loaded$rich ~ sf$map_loaded$Salt) # Homogeneous
+m <- aov(rich ~ Salt + Depth, data = sf$map_loaded)
+Anova(m, type = "II") # Salt, not Depth
+m <- aov(rich ~ Salt, data = sf$map_loaded)
+shapiro.test(m$residuals) # Normal
+summary(m)
+t <- emmeans(object = m, specs = "Salt") %>%
+  cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
+  mutate(name = "rich",
+         y = max(sf$map_loaded$rich)+(max(sf$map_loaded$rich)-min(sf$map_loaded$rich))/20)
+leveneTest(sf$map_loaded$shannon ~ sf$map_loaded$Salt) # Homogeneous
+m1 <- aov(shannon ~ Salt + Depth, data = sf$map_loaded)
+Anova(m1, type = "II") # Salt, not Depth
+m1 <- aov(shannon ~ Salt, data = sf$map_loaded)
+shapiro.test(m1$residuals) # Normal
+summary(m1)
+t1 <- emmeans(object = m1, specs = "Salt") %>%
+  cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
+  mutate(name = "shannon",
+         y = max(sf$map_loaded$shannon)+(max(sf$map_loaded$shannon)-min(sf$map_loaded$shannon))/20)
+label_df <- rbind(t, t1)
+facet_df <- c("rich" = "(a) Richness",
+              "shannon" = "(b) Shannon")
+alpha_long <- sf$map_loaded %>%
+  pivot_longer(cols = c("rich", "shannon"))
+pdf("InitialFigs/SF_Alpha.pdf", width = 6, height = 3)
+ggplot(alpha_long, aes(reorder(Salt, value, mean), value, 
+                       colour = Salt)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(size = 2, alpha = 0.75, width = 0.2, aes(shape = Depth)) +
+  geom_text(data = label_df, aes(Salt, y, label = str_trim(.group)), 
+            size = 4, color = "black") +
+  labs(x = "Site", y = "Number of OTUs", shape = "Depth (m)") +
+  scale_colour_viridis_d() +
+  guides(colour = "none") +
+  facet_wrap(~ name, ncol = 2, scales = "free_y", labeller = as_labeller(facet_df)) +
+  theme_bw() +
+  theme(legend.position = c(1,0),
+        legend.justification = c(1,0),
+        legend.background = element_blank(),
+        legend.title.align = 0.5,
+        axis.title = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 10))
+dev.off()
+
+#### __Beta ####
+sf_bc <- calc_dm(sf$data_loaded)
+set.seed(1150)
+adonis2(sf_bc ~ sf$map_loaded$Salt + sf$map_loaded$Depth) # Salt and Depth sig
+anova(betadisper(sf_bc, sf$map_loaded$Salt)) # Dispersion not homogeneous
+anova(betadisper(sf_bc, sf$map_loaded$Depth)) # Dispersion homogeneous
+sf_pcoa <- cmdscale(sf_bc, k = nrow(sf$map_loaded) - 1, eig = T)
+pcoaA1 <- round((eigenvals(sf_pcoa)/sum(eigenvals(sf_pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(sf_pcoa)/sum(eigenvals(sf_pcoa)))[2]*100, digits = 1)
+sf$map_loaded$Axis01 <- scores(sf_pcoa)[,1]
+sf$map_loaded$Axis02 <- scores(sf_pcoa)[,2]
+micro.hulls <- ddply(sf$map_loaded, c("Salt"), find_hull)
+pdf("InitialFigs/SF_PCoA.pdf", width = 7, height = 5)
+ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Salt, fill = Salt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 1, aes(colour = Salt, shape = Depth),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (cm)") +
+  scale_fill_viridis_d() +
+  scale_colour_viridis_d() +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10))
+dev.off()
+
+#### __Taxa ####
+sf_phyla <- summarize_taxonomy(sf, level = 2, report_higher_tax = F)
+plot_ts_heatmap(sf_phyla, sf$map_loaded, 0.01, 'Salt', rev_taxa = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+sf_barsP <- plot_taxa_bars(sf_phyla, sf$map_loaded, "Salt", num_taxa = 12, data_only = T) %>%
+  mutate(taxon = fct_rev(taxon))
+pdf("InitialFigs/SF_Phyla.pdf", width = 7, height = 5)
+ggplot(sf_barsP, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Sample", y = "Relative abundance", fill = "Phylum") +
+  scale_fill_manual(values = c("grey90", brewer.pal(12, "Paired")[12:1])) +
+  scale_y_continuous(expand = c(0.01, 0.01)) + 
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10))
+dev.off()
+taxa_summary_by_sample_type(sf_phyla, sf$map_loaded, 'Salt', 0.01, 'KW')
+
+sf_class <- summarize_taxonomy(sf, level = 3, report_higher_tax = F)
+plot_ts_heatmap(sf_class, sf$map_loaded, 0.01, 'Salt', rev_taxa = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+sf_barsC <- plot_taxa_bars(sf_class, sf$map_loaded, "Salt", 
+                              num_taxa = 12, data_only = T) %>%
+  mutate(taxon = gsub("NA", "Unclassified", taxon)) %>%
+  mutate(taxon = fct_relevel(taxon, "Other", after = Inf)) %>%
+  mutate(taxon = fct_relevel(taxon, "Unclassified", after = Inf)) %>%
+  mutate(taxon = fct_rev(taxon))
+ggplot(sf_barsC, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = NULL, y = "Relative abundance", fill = "Class") +
+  scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[11:1])) +
+  scale_y_continuous(expand = c(0.01, 0.01)) + 
+  theme_classic() +
+  theme(axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10))
+taxa_summary_by_sample_type(sf_class, sf$map_loaded, 'Salt', 0.01, 'KW')
+
+sf_order <- summarize_taxonomy(sf, level = 4, report_higher_tax = F)
+plot_ts_heatmap(sf_order, sf$map_loaded, 0.01, 'Salt', rev_taxa = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+sf_barsO <- plot_taxa_bars(sf_order, sf$map_loaded, "Salt", 
+                              num_taxa = 12, data_only = T) %>%
+  mutate(taxon = gsub("NA", "Unclassified", taxon)) %>%
+  mutate(taxon = fct_relevel(taxon, "Other", after = Inf)) %>%
+  mutate(taxon = fct_relevel(taxon, "Unclassified", after = Inf)) %>%
+  mutate(taxon = fct_rev(taxon))
+ggplot(sf_barsO, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = NULL, y = "Relative abundance", fill = "Order") +
+  scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[11:1])) +
+  scale_y_continuous(expand = c(0.01, 0.01)) + 
+  theme_classic() +
+  theme(axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10))
+taxa_summary_by_sample_type(sf_order, sf$map_loaded, 'Salt', 0.01, 'KW')
+
+sf_family <- summarize_taxonomy(sf, level = 5, report_higher_tax = F)
+plot_ts_heatmap(sf_family, sf$map_loaded, 0.01, 'Salt', rev_taxa = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+sf_barsF <- plot_taxa_bars(sf_family, sf$map_loaded, "Salt", 
+                              num_taxa = 12, data_only = T) %>%
+  mutate(taxon = gsub("NA", "Unclassified", taxon)) %>%
+  mutate(taxon = fct_relevel(taxon, "Other", after = Inf)) %>%
+  mutate(taxon = fct_relevel(taxon, "Unclassified", after = Inf)) %>%
+  mutate(taxon = fct_rev(taxon))
+ggplot(sf_barsF, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = NULL, y = "Relative abundance", fill = "Family") +
+  scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[11:1])) +
+  scale_y_continuous(expand = c(0.01, 0.01)) + 
+  theme_classic() +
+  theme(axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10))
+taxa_summary_by_sample_type(sf_family, sf$map_loaded, 'Salt', 0.01, 'KW')
+
+sf_genus <- summarize_taxonomy(sf, level = 6, report_higher_tax = F)
+plot_ts_heatmap(sf_genus, sf$map_loaded, 0.01, 'Salt', rev_taxa = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+sf_barsG <- plot_taxa_bars(sf_genus, sf$map_loaded, "Salt", 
+                              num_taxa = 12, data_only = T) %>%
+  mutate(taxon = gsub("NA", "Unclassified", taxon)) %>%
+  mutate(taxon = fct_relevel(taxon, "Other", after = Inf)) %>%
+  mutate(taxon = fct_relevel(taxon, "Unclassified", after = Inf)) %>%
+  mutate(taxon = fct_rev(taxon))
+ggplot(sf_barsG, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = NULL, y = "Relative abundance", fill = "Genus") +
+  scale_fill_manual(values = c("grey75", "grey90", brewer.pal(12, "Paired")[11:1])) +
+  scale_y_continuous(expand = c(0.01, 0.01)) + 
+  theme_classic() +
+  theme(axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10))
+taxa_summary_by_sample_type(sf_genus, sf$map_loaded, 'Salt', 0.01, 'KW')
+
+sf_guilds <- summarize_taxonomy(sf, level = 9, report_higher_tax = F)
+plot_ts_heatmap(sf_guilds, sf$map_loaded, 0.01, 'Salt', rev_taxa = T) +
+  coord_flip() +
+  theme(axis.text.x = element_text(size = 12, angle = 0, vjust = 1, hjust = 0.5))
+sf_barsGu <- plot_taxa_bars(sf_guilds, sf$map_loaded, "Salt", 
+                               num_taxa = 20, data_only = T) %>%
+  filter(taxon != "NA") %>%
+  droplevels() %>%
+  mutate(taxon = factor(taxon,
+                        levels = Guild_cols$Guild))
+tallest_bar <- sf_barsGu %>%
+  group_by(group_by) %>%
+  summarise(sum = sum(mean_value))
+pdf("InitialFigs/SF_Guilds.pdf", width = 7, height = 5)
+ggplot(sf_barsGu, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Salt", y = "Relative abundance", fill = "Guild") +
+  scale_fill_manual(values = Guild_cols$color) +
+  scale_y_continuous(expand = c(max(tallest_bar$sum)/100, max(tallest_bar$sum)/100)) + 
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10),
+        axis.title.x = element_blank())
+dev.off()
+taxa_summary_by_sample_type(sf_guilds, 
+                            sf$map_loaded, 
+                            type_header = 'Salt', 
+                            filter_level = 0.01, 
+                            test_type = 'KW')
+
+# Guilds by sample (to show variation)
+sf$map_loaded$sampleID <- rownames(sf$map_loaded)
+sf_barsGu <- plot_taxa_bars(sf_guilds,
+                               sf$map_loaded,
+                               "sampleID",
+                               num_taxa = 20,
+                               data_only = TRUE) %>%
+  filter(taxon != "NA") %>%
+  droplevels() %>%
+  mutate(taxon = factor(taxon,
+                        levels = Guild_cols$Guild)) %>%
+  left_join(., sf$map_loaded, by = c("group_by" = "sampleID"))
+facet_names <- c(" 0-5" = "Depth 5 cm",
+                 " 5-15" = "Depth 15 cm",
+                 "Freshwater" = "Freshwater",
+                 "Oligohaline" = "Oligohaline",
+                 "Mesohaline" = "Mesohaline",
+                 "Polyhaline" = "Polyhaline")
+tallest_bar <- sf_barsGu %>%
+  group_by(group_by) %>%
+  summarise(sum = sum(mean_value))
+pdf("InitialFigs/SF_Guilds_samples.pdf", width = 9, height = 5)
+ggplot(sf_barsGu, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Sample", y = "Relative abundance", fill = "Guild") +
+  scale_fill_manual(values = Guild_cols$color) +
+  scale_y_continuous(expand = c(max(tallest_bar$sum)/100, max(tallest_bar$sum)/100)) + 
+  facet_nested(~ Depth + Salt, space = "free", scales = "free_x",
+               labeller = as_labeller(facet_names)) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 90, hjust = 1, vjust = 0.5),
+        strip.background = element_rect(size = 0.2),
+        axis.line.y = element_blank())
+dev.off()
+
+#### __Simper ####
+sf_sim <- simper(t(sf$data_loaded), 
+                    sf$map_loaded$Salt)
+sf_s <- summary(sf_sim)
+head(sf_s$Freshwater_Mesohaline)
+sf_simper_results <- head(sf_s$Freshwater_Mesohaline, n = 20) %>%
+  mutate(ASV = rownames(.),
+         Comparison = "Freshwater/Mesohaline") %>%
+  left_join(., sf$taxonomy_loaded, by = c("ASV" = "taxonomy8")) %>%
+  mutate(SaltResponse = ifelse(avb > ava, "Postive", "Negative")) %>%
+  rename("OTU" = "ASV") %>%
+  mutate(OTU = gsub("ASV", "OTU", OTU)) %>%
+  rename(c("Domain" = "taxonomy1",
+           "Phylum" = "taxonomy2",
+           "Class" = "taxonomy3",
+           "Order" = "taxonomy4",
+           "Family" = "taxonomy5",
+           "Genus" = "taxonomy6",
+           "Species" = "taxonomy7",
+           "MeanSalt" = "ava",
+           "MeanControl" = "avb",
+           "CumulativeContribution" = "cumsum")) %>%
+  dplyr::select(Comparison, SaltResponse, Domain, Phylum, Class, Order, Family, Genus,
+                Species, OTU, MeanSalt, MeanControl, CumulativeContribution)
+write_xlsx(sf_simper_results, 
+           "simper_results_sf.xlsx",
+           format_headers = F)
+
+#### __Multipatt ####
+set.seed(1202)
+sf_mp <- multipatt(t(sf$data_loaded), 
+                      sf$map_loaded$Salt, 
+                      func = "r.g", 
+                      control = how(nperm=999))
+# None with Q, use P
+sf_mp_results <- sf_mp$sign %>%
+  mutate(num_sites = rowSums(cbind(s.Freshwater, s.Oligohaline, s.Mesohaline)),
+         q.value = qvalue(sf_mp$sign$p.value)$qvalues,
+         Group = "NA",
+         ASV = rownames(sf_mp$sign)) %>%
+  filter(p.value == 0.001) %>%
+  filter(stat >= 0.9) %>%
+  filter(num_sites <= 2) %>%
+  left_join(., sf$taxonomy_loaded, by = c("ASV" = "taxonomy8"))
+for (i in 1:nrow(sf_mp_results)) {
+  if (sf_mp_results$num_sites[i] == 1 & sf_mp_results$s.Freshwater[i] == 1) {
+    sf_mp_results$Group[i] <- "Freshwater"
+  }
+}
+for (i in 1:nrow(sf_mp_results)) {
+  if (sf_mp_results$num_sites[i] == 1 & sf_mp_results$s.Oligohaline[i] == 1) {
+    sf_mp_results$Group[i] <- "Oligohaline"
+  }
+}
+for (i in 1:nrow(sf_mp_results)) {
+  if (sf_mp_results$num_sites[i] == 1 & sf_mp_results$s.Mesohaline[i] == 1) {
+    sf_mp_results$Group[i] <- "Mesohaline"
+  }
+}
+table(sf_mp_results$Group)
+sf_asv <- summarize_taxonomy(sf, level = 8, report_higher_tax = F)
+sf_asv_all <- data.frame("RelAbundance" = round(rowMeans(sf_asv) * 100, digits = 5)) %>%
+  mutate(ASV = rownames(.))
+sf_mp_corrs <- as.data.frame(sf_mp$str) %>%
+  dplyr::select(1:length(levels(sf$map_loaded$Salt))) %>%
+  mutate(ASV = rownames(.)) %>%
+  filter(ASV %in% sf_mp_results$ASV) %>%
+  set_names(c("Freshwater", "Oligohaline", "Mesolhaline", "ASV"))
+# Add corrs and taxonomy
+sf_mp_results <- sf_mp_results %>%
+  filter(Group == "Mesohaline") %>%
+  left_join(., sf_asv_all, by = "ASV") %>%
+  left_join(., sf_mp_corrs, by = "ASV") %>%
+  dplyr::select(taxonomy2, taxonomy6, ASV, Group, names(sf_mp_corrs)[1:3], "RelAbundance") %>%
+  mutate(ASV = gsub("ASV", "OTU", ASV)) %>%
+  arrange(Group, taxonomy2, taxonomy6) %>%
+  mutate(ASV = factor(ASV, levels = ASV)) %>%
+  set_names(c("Phylum", "Genus", "ASV", "Group", names(sf_mp_corrs)[1:3], "RelAbundance")) %>%
+  mutate(taxon = paste(Phylum, Genus, ASV, sep = "; ")) %>%
+  mutate(taxon = factor(taxon, levels = taxon))
+# Plot heatmap with abundance barplot
+sf.hm.melted <- sf_mp_results %>%
+  dplyr::select(taxon, names(sf_mp_corrs)[1:3]) %>%
+  melt(., id.vars = c("taxon"))
+sf.hm <- ggplot(data = sf.hm.melted, 
+                   aes(x = factor(taxon), y = variable, fill = value)) + 
+  geom_tile() + 
+  scale_fill_distiller(name = "Indicator correlation index", palette = "RdBu", 
+                       direction = -1, na.value = "transparent", type = "div", limits = c(-1, 1)) +
+  scale_x_discrete(breaks = unique(sf.hm.melted$taxon), labels = unique(sf.hm.melted$taxon),
+                   limits = rev(levels(sf.hm.melted$taxon))) +
+  scale_y_discrete(position = "right") +
+  theme_minimal() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        legend.title = element_text(size = 10), legend.key.height = unit(0.5,"cm"),
+        legend.key.width = unit(1, "cm"), legend.text = element_text(size = 7)) +
+  guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5)) +
+  coord_flip()
+sf.l <- get_legend(sf.hm)
+sf.hm.clean <- sf.hm +
+  theme(axis.title.y = element_blank(), axis.text.y = element_text(margin = margin(c(0,-10,0,0)),
+                                                                   size = 5),
+        axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), 
+        panel.grid.major = element_blank(), legend.position="none",
+        axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-2,0))), 
+        plot.margin = margin(c(0,-2,0,5))) +
+  labs(y = "Group")
+sf.bp.y <- ggplot(data = sf_mp_results, aes(x = taxon, y = RelAbundance)) + 
+  geom_bar(stat = "identity", fill = "grey") + 
+  scale_y_continuous(position = "right") +
+  scale_x_discrete(limits = rev(levels(sf_mp_results$taxon))) +
+  coord_flip() + 
+  theme_minimal() +
+  theme(axis.title.y = element_blank(), axis.text.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.position="none", plot.margin = margin(c(0,5,0,-5)),
+        axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-2,0)))) +
+  labs(y = "Rel. abund. (%)")
+pdf("InitialFigs/sf_Multipatt.pdf", width = 8, height = 5)
+plot_grid(sf.hm.clean, sf.bp.y, sf.l, NULL, nrow = 2, ncol = 2, 
+          rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
+dev.off()
+
+# Problem is that at OTU level, many OTUs are too rare, not even 1%. 
+# So let's see what indicators there are at the genus level.
+# First get aggregate taxonomy table
+sf_tax <- sf$taxonomy_loaded %>%
+  group_by(taxonomy6) %>%
+  slice_head(n = 1) %>%
+  dplyr::select(-taxonomy7, -taxonomy8)
+sf_genus <- summarize_taxonomy(sf, level = 6, relative = F, report_higher_tax = F)
+set.seed(1202)
+sf_mp <- multipatt(t(sf_genus), 
+                      sf$map_loaded$Salt, 
+                      func = "r.g", 
+                      control = how(nperm=999))
+sf_mp_results <- sf_mp$sign %>%
+  mutate(num_sites = rowSums(cbind(s.Freshwater, s.Oligohaline, s.Mesohaline)),
+         q.value = qvalue(sf_mp$sign$p.value)$qvalues,
+         Group = "NA",
+         Genus = rownames(sf_mp$sign)) %>%
+  filter(q.value < 0.05) %>%
+  filter(stat >= 0.7) %>%
+  filter(num_sites <= 2) %>%
+  left_join(., sf_tax, by = c("Genus" = "taxonomy6"))
+for (i in 1:nrow(sf_mp_results)) {
+  if (sf_mp_results$num_sites[i] == 1 & sf_mp_results$s.Freshwater[i] == 1) {
+    sf_mp_results$Group[i] <- "Freshwater"
+  }
+}
+for (i in 1:nrow(sf_mp_results)) {
+  if (sf_mp_results$num_sites[i] == 1 & sf_mp_results$s.Oligohaline[i] == 1) {
+    sf_mp_results$Group[i] <- "Oligohaline"
+  }
+}
+for (i in 1:nrow(sf_mp_results)) {
+  if (sf_mp_results$num_sites[i] == 1 & sf_mp_results$s.Mesohaline[i] == 1) {
+    sf_mp_results$Group[i] <- "Mesohaline"
+  }
+}
+table(sf_mp_results$Group)
+sf_genus_all <- data.frame("RelAbundance" = round(rowMeans(sf_genus)/min(colSums(sf$data_loaded)) * 100, 
+                                                     digits = 4)) %>%
+  mutate(Genus = rownames(.))
+sf_mp_corrs <- as.data.frame(sf_mp$str) %>%
+  dplyr::select(1:length(levels(sf$map_loaded$Salt))) %>%
+  mutate(Genus = rownames(.)) %>%
+  filter(Genus %in% sf_mp_results$Genus) %>%
+  set_names(c("Freshwater", "Oligohaline", "Mesohaline", "Genus"))
+# Add corrs and taxonomy
+sf_mp_results <- sf_mp_results %>%
+  filter(Group == "Mesohaline") %>%
+  left_join(., sf_genus_all, by = "Genus") %>%
+  left_join(., sf_mp_corrs, by = "Genus") %>%
+  dplyr::select(taxonomy2, Genus, Group, names(sf_mp_corrs)[1:3], "RelAbundance") %>%
+  arrange(Group, taxonomy2) %>%
+  mutate(Genus = factor(Genus, levels = Genus)) %>%
+  set_names(c("Phylum", "Genus", "Group", names(sf_mp_corrs)[1:3], "RelAbundance")) %>%
+  mutate(taxon = paste(Phylum, Genus, sep = "; ")) %>%
+  mutate(taxon = factor(taxon, levels = taxon))
+# Plot heatmap with abundance barplot
+sf.hm.melted <- sf_mp_results %>%
+  dplyr::select(taxon, names(sf_mp_corrs)[1:3]) %>%
+  melt(., id.vars = c("taxon"))
+sf.hm <- ggplot(data = sf.hm.melted, 
+                   aes(x = factor(taxon), y = variable, fill = value)) + 
+  geom_tile() + 
+  scale_fill_distiller(name = "Indicator correlation index", palette = "RdBu", 
+                       direction = -1, na.value = "transparent", type = "div", limits = c(-1, 1)) +
+  scale_x_discrete(breaks = unique(sf.hm.melted$taxon), labels = unique(sf.hm.melted$taxon),
+                   limits = rev(levels(sf.hm.melted$taxon))) +
+  scale_y_discrete(position = "right") +
+  theme_minimal() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        legend.title = element_text(size = 10), legend.key.height = unit(0.5,"cm"),
+        legend.key.width = unit(1, "cm"), legend.text = element_text(size = 7)) +
+  guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5)) +
+  coord_flip()
+sf.l <- get_legend(sf.hm)
+sf.hm.clean <- sf.hm +
+  theme(axis.title.y = element_blank(), axis.text.y = element_text(margin = margin(c(0,-5,0,0))),
+        axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), 
+        panel.grid.major = element_blank(), legend.position="none",
+        axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-2,0))), 
+        plot.margin = margin(c(0,-2,0,5))) +
+  labs(y = "Group")
+sf.bp.y <- ggplot(data = sf_mp_results, aes(x = taxon, y = RelAbundance)) + 
+  geom_bar(stat = "identity", fill = "grey") + 
+  scale_y_continuous(position = "right") +
+  scale_x_discrete(limits = rev(levels(sf_mp_results$taxon))) +
+  coord_flip() + 
+  theme_minimal() +
+  theme(axis.title.y = element_blank(), axis.text.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.position="none", plot.margin = margin(c(0,5,0,-5)),
+        axis.text.x.top = element_text(size = 6, margin = margin(c(0,0,-2,0)))) +
+  labs(y = "Rel. abund. (%)")
+pdf("InitialFigs/sf_Multipatt_genus.pdf", width = 8, height = 5)
+plot_grid(sf.hm.clean, sf.bp.y, sf.l, NULL, nrow = 2, ncol = 2, 
+          rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
+dev.off()
+
+
+
+#### __BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, porewater chemistry is only on D2 samples (5-15 cm depth)
+
+# Get variables
+env <- sf$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
+                Salinity_ppt_all, SO4_mgL, DOC_mgL, Fe_mgL, Mn_mgL, Cu_mgL, Zn_mgL,
+                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_Bulk_dens,
+                sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/SF_BGC_corr.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(sf_bc, k = nrow(sf$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.5
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "sed_Cl_mgL") %>%
+  filter(variables != "sed_SO4_mgL") %>%
+  mutate(shortnames = c("CH4", "CO2", "Salinity", "SO4", "DOC", "Cu",
+                        "Zn", "sed_pH", "sed_NH4", "C", "N", "C:N",
+                        "BD", "sed_Fe", "sed_Mn", "sed_Cu", "sed_Zn"))
+# Note, deleted sediment CL and SO4 as they were very similar to porewater
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+sf$map_loaded$Axis01 <- scores(pcoa)[,1]
+sf$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(sf$map_loaded, c("Salt"), find_hull)
+g <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Salt, fill = Salt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 0.8, aes(colour = Salt, shape = Depth),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (cm)",
+       colour = "Salinity",
+       fill = "Salinity") +
+  scale_fill_viridis_d() +
+  scale_colour_viridis_d(guide = guide_legend(override.aes = list(shape = 15))) +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10),
+        legend.key.size = unit(0.4, "cm"),
+        legend.margin = margin(2,2,2,-2, "pt"),
+        legend.spacing = unit(0, "cm")) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = subset(vec.df, shortnames != "SO4"),
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3, color = "black") +
+  geom_text(data = subset(vec.df, shortnames == "SO4"),
+            aes(x = Dim1, y = Dim2 - 0.015, label = shortnames),
+            size = 3, color = "black") +
+  coord_fixed()
+g
+pdf("InitialFigs/SF_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+ggplotly(g)
+
+# Ordistep
+comm_nona <- as.data.frame(t(sf$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova #
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/SF_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = detra, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = detra, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = detra, level = 8, threshold = 0.5)
+pdf("InitialFigs/SF_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = detra, level = 9, threshold = 0)
+dev.off()
+
+
+
+#### ...................................... ####
+#### 7. Comparison Overview ####
 input_filt_rare <- readRDS("input_filt_rare_comb.rds")
 input_filt_rare$map_loaded$Estuary <- factor(input_filt_rare$map_loaded$Estuary,
                                              levels = c("Waccamaw", "Alligator",
@@ -3890,7 +5065,7 @@ dev.off()
 
 
 #### _Taxa ####
-#### __Indicators ####
+#### _Indicators ####
 sim <- simper(t(input_filt_rare_abund$data_loaded), 
               input_filt_rare_abund$map_loaded$Estuary)
 s <- summary(sim)
@@ -3957,7 +5132,7 @@ for (i in 1:nrow(multipatt_results)) {
 }
 table(multipatt_results$Group)
 
-#### __Domain ####
+#### _Domain ####
 tax_sum_domain <- summarize_taxonomy(input_filt_rare, level = 1, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_domain, 
                 input_filt_rare$map_loaded, 
@@ -3987,7 +5162,7 @@ taxa_summary_by_sample_type(tax_sum_domain,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Phylum ####
+#### _Phylum ####
 tax_sum_phyla <- summarize_taxonomy(input_filt_rare, level = 2, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_phyla, 
                 input_filt_rare$map_loaded, 
@@ -4089,7 +5264,7 @@ ggplot(bars_ar, aes(group_by, mean_value, fill = taxon)) +
         axis.title.x = element_blank(),
         axis.text = element_text(size = 10))
 
-#### __Class ####
+#### _Class ####
 tax_sum_class <- summarize_taxonomy(input_filt_rare, level = 3, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_class, 
                 input_filt_rare$map_loaded, 
@@ -4145,7 +5320,7 @@ ggplot(bars_su, aes(group_by, mean_value, fill = taxon)) +
         axis.text = element_text(size = 10),
         axis.title.x = element_blank())
 
-#### __Order ####
+#### _Order ####
 tax_sum_order <- summarize_taxonomy(input_filt_rare, level = 4, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_order, 
                 input_filt_rare$map_loaded, 
@@ -4177,7 +5352,7 @@ taxa_summary_by_sample_type(tax_sum_order,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Family ####
+#### _Family ####
 tax_sum_families <- summarize_taxonomy(input_filt_rare, level = 5, report_higher_tax = FALSE)
 plot_ts_heatmap(tax_sum_families, 
                 input_filt_rare$map_loaded, 
@@ -4237,7 +5412,7 @@ ggplot(bars_meth, aes(group_by, mean_value, fill = taxon)) +
         axis.title.x = element_blank(),
         axis.text = element_text(size = 10))
 
-#### __Genus ####
+#### _Genus ####
 tax_sum_genera <- summarize_taxonomy(input_filt_rare, level = 6, report_higher_tax = TRUE)
 plot_ts_heatmap(tax_sum_genera, 
                 input_filt_rare$map_loaded, 
@@ -4266,7 +5441,7 @@ taxa_summary_by_sample_type(tax_sum_genera,
                             filter_level = 0.01, 
                             test_type = 'KW')
 
-#### __Guilds ####
+#### _Guilds ####
 tax_sum_guilds <- summarize_taxonomy(input_filt_rare, level = 9, report_higher_tax = F)
 plot_ts_heatmap(tax_sum_guilds, 
                 input_filt_rare$map_loaded, 
@@ -4338,7 +5513,7 @@ ggplot(bars, aes(group_by, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __Venn ####
+#### _Venn ####
 phy <- summarize_taxonomy(input_filt_rare, level = 2, report_higher_tax = F)
 cla <- summarize_taxonomy(input_filt_rare, level = 3, report_higher_tax = F)
 ord <- summarize_taxonomy(input_filt_rare, level = 4, report_higher_tax = F)
@@ -4373,17 +5548,123 @@ plot_grid(plot_venn_diagram(input_phylum, "Estuary", 0.00000000000000001),
                      "(d) Family", "(e) Genus", "(f) OTU"))
 dev.off()
 
+#### _BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, porewater chemistry is only on D2 samples (5-15 cm depth)
+
+# Get variables
+env <- sf$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
+                Salinity_ppt_all, SO4_mgL, DOC_mgL, Fe_mgL, Mn_mgL, Cu_mgL, Zn_mgL,
+                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_Bulk_dens,
+                sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL)
+env_nona <- na.omit(env)
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/SF_BGC_corr.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(sf_bc, k = nrow(sf$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.5
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  filter(variables != "sed_Cl_mgL") %>%
+  filter(variables != "sed_SO4_mgL") %>%
+  mutate(shortnames = c("CH4", "CO2", "Salinity", "SO4", "DOC", "Cu",
+                        "Zn", "sed_pH", "sed_NH4", "C", "N", "C:N",
+                        "BD", "sed_Fe", "sed_Mn", "sed_Cu", "sed_Zn"))
+# Note, deleted sediment CL and SO4 as they were very similar to porewater
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+sf$map_loaded$Axis01 <- scores(pcoa)[,1]
+sf$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(sf$map_loaded, c("Salt"), find_hull)
+g <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Salt, fill = Salt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 0.8, aes(colour = Salt, shape = Depth),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (cm)",
+       colour = "Salinity",
+       fill = "Salinity") +
+  scale_fill_viridis_d() +
+  scale_colour_viridis_d(guide = guide_legend(override.aes = list(shape = 15))) +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = subset(vec.df, shortnames != "SO4"),
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3, color = "black") +
+  geom_text(data = subset(vec.df, shortnames == "SO4"),
+            aes(x = Dim1, y = Dim2 - 0.015, label = shortnames),
+            size = 3, color = "black") +
+  coord_fixed()
+g
+pdf("InitialFigs/SF_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(sf$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova #
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/SF_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = sf, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = sf, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = sf, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = sf, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = sf, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = sf, level = 8, threshold = 0.5)
+pdf("InitialFigs/SF_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = sf, level = 9, threshold = 0)
+dev.off()
+
+
 
 
 #### ...................................... ####
-#### 6. Comparison Field Control ####
+#### 8. Comparison Field Control ####
 # Only look at field soils (no manipulations or incubations)
 # Classify as fresh/oligo/meso/poly for broad salinity grouping
 # All sites
 # Archaea
 # Bacteria
 
-#### __Setup ####
+#### _Setup ####
 input_filt_rare <- readRDS("input_filt_rare_comb.rds")
 input_filt_rare$map_loaded <- input_filt_rare$map_loaded %>%
   mutate(Estuary = factor(Estuary,
@@ -4484,7 +5765,7 @@ field$map_loaded <- field$map_loaded %>%
                        levels = c("Freshwater", "Oligohaline", 
                                   "Mesohaline", "Polyhaline")))
 
-#### __Alpha ####
+#### _Alpha ####
 leveneTest(field$map_loaded$rich ~ field$map_loaded$Salt) # Almost homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = field$map_loaded)
 Anova(m, type = "II") # Estuary, Salt sig. Depth marginal.
@@ -4526,7 +5807,7 @@ ggplot(alpha_long, aes(reorder(Salt, value, mean), value)) +
         strip.text = element_text(size = 10))
 dev.off()
 
-#### __Beta ####
+#### _Beta ####
 field_bc <- calc_dm(field$data_loaded)
 set.seed(1150)
 adonis2(field_bc ~ field$map_loaded$Estuary+field$map_loaded$Salt+field$map_loaded$Depth) # All
@@ -4557,7 +5838,7 @@ ggplot(field$map_loaded, aes(Axis01, Axis02)) +
         axis.text = element_text(size = 10))
 dev.off()
 
-#### __BC Among Within ####
+#### _BC Among Within ####
 # Plot BC dissimilarity across site and salt combos
 # Is Fresh vs. Poly at same site more different than Fresh vs Fresh at different sites?
 # Compare SF_Fresh to the other three fresh and to SF_Oligo, SF_Meso, SF_Poly
@@ -4675,7 +5956,7 @@ pdf("InitialFigs/Comb_Control_BC.pdf", width = 6, height = 5)
 ggdraw(plot_final)
 dev.off()
 
-#### __Taxa ####
+#### _Taxa ####
 field_phyla <- summarize_taxonomy(field, level = 2, report_higher_tax = F)
 plot_ts_heatmap(field_phyla, field$map_loaded, 0.01, 'EstSalt', rev_taxa = T) +
   coord_flip() +
@@ -4896,7 +6177,7 @@ ggplot(field_barsGu, aes(group_by, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __Methano ####
+#### _Methano ####
 # Look at methanogens (careful to do this accurately!)
 tax_sum_families_meth <- summarize_taxonomy(field, level = 5, 
                                             report_higher_tax = F)
@@ -4928,7 +6209,7 @@ ggplot(field_barsMethano, aes(group_by, mean_value, fill = taxon)) +
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1))
 dev.off()
 
-#### __Desulfo ####
+#### _Desulfo ####
 # Subset taxa to SRB and SRB_syn guilds
 field_srb <- filter_taxa_from_input(field,
                                     taxa_to_keep = c("SRB", "SRB_syn"),
@@ -4960,7 +6241,7 @@ ggplot(field_barsDesulfo, aes(group_by, mean_value, fill = taxon)) +
         legend.text = element_text(size = 10))
 dev.off()
 
-#### __Simper ####
+#### _Simper ####
 field_sim <- simper(t(field$data_loaded), 
                     field$map_loaded$Salt)
 field_s <- summary(field_sim)
@@ -5002,7 +6283,7 @@ write_xlsx(field_simper_results,
            "simper_results_comb_control.xlsx",
            format_headers = F)
 
-#### __Multipatt ####
+#### _Multipatt ####
 set.seed(1202)
 field_mp <- multipatt(t(field$data_loaded), 
                       field$map_loaded$Salt, 
@@ -5200,13 +6481,13 @@ dev.off()
 
 
 
-#### 7. Comparison Lab Inc ####
+#### 9. Comparison Lab Inc ####
 # Only look at incubations
 # Only look at control and + ASW
 # Only look at final time point
 # Delaware and North Carolina
 # Pull out methanogens and sulfate reducers
-#### __Setup ####
+#### _Setup ####
 input_filt_rare <- readRDS("input_filt_rare_comb.rds")
 input_filt_rare$map_loaded <- input_filt_rare$map_loaded %>%
   mutate(Estuary = factor(Estuary,
@@ -5281,7 +6562,7 @@ lab$map_loaded$EstSalt <- paste(lab$map_loaded$Estuary,
                                 lab$map_loaded$Salt,
                                 sep = "_")
 
-#### __Alpha ####
+#### _Alpha ####
 leveneTest(lab$map_loaded$rich ~ lab$map_loaded$Salt) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = lab$map_loaded)
 Anova(m, type = "II") # Estuary sig, salt and depth not sig.
@@ -5311,7 +6592,7 @@ dev.off()
 
 
 
-#### __Beta ####
+#### _Beta ####
 lab_bc <- calc_dm(lab$data_loaded)
 set.seed(1150)
 adonis2(lab_bc ~ lab$map_loaded$Estuary+lab$map_loaded$Salt+lab$map_loaded$Depth) # All
@@ -5368,7 +6649,7 @@ plot_grid(p_noleg, leg, rel_widths = c(5,1))
 dev.off()
 
 
-#### __Taxa ####
+#### _Taxa ####
 lab_phyla <- summarize_taxonomy(lab, level = 2, report_higher_tax = F)
 plot_ts_heatmap(lab_phyla, lab$map_loaded, 0.01, 'EstSalt', rev_taxa = T) +
   coord_flip() +
@@ -5600,7 +6881,7 @@ ggplot(lab_barsGu, aes(group_by, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __Methano ####
+#### _Methano ####
 # Look at methanogens (careful to do this accurately!)
 tax_sum_families_meth <- summarize_taxonomy(lab, level = 5, 
                                             report_higher_tax = F)
@@ -5754,7 +7035,7 @@ ggplot(lab_barsMethanobacteriaceae, aes(Salt, mean_value, fill = taxon)) +
 dev.off()
 
 
-#### __Desulfo ####
+#### _Desulfo ####
 # Subset taxa to SRB and SRB_syn guilds
 lab_srb <- filter_taxa_from_input(lab,
                                   taxa_to_keep = c("SRB", "SRB_syn"),
@@ -5788,7 +7069,7 @@ ggplot(lab_barsDesulfo, aes(Salt, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __Simper ####
+#### _Simper ####
 lab_sim <- simper(t(lab$data_loaded), 
                     lab$map_loaded$Salt)
 lab_s <- summary(lab_sim)
@@ -5816,7 +7097,7 @@ write_xlsx(lab_df1,
            "simper_results_comb_lab.xlsx",
            format_headers = F)
 
-#### __Multipatt ####
+#### _Multipatt ####
 set.seed(1202)
 lab_mp <- multipatt(t(lab$data_loaded), 
                       lab$map_loaded$Salt, 
@@ -5904,13 +7185,13 @@ dev.off()
 
 
 
-#### 8. Comparison Field Exp ####
+#### 10. Comparison Field Exp ####
 # Only look at field manipulations
 # South Carolina and Delaware
 # Delaware just look at transplant to oligo which is similar to seawater addition
 # Delaware just look at surface depth, similar to SC depth
 # "Soil Field plots", and "Soil mesocosm"
-#### __Setup ####
+#### _Setup ####
 input_filt_rare <- readRDS("input_filt_rare_comb.rds")
 input_filt_rare$map_loaded <- input_filt_rare$map_loaded %>%
   mutate(Estuary = factor(Estuary,
@@ -5952,7 +7233,7 @@ exp$map_loaded$EstSalt <- paste(exp$map_loaded$Estuary,
                                 exp$map_loaded$Salt,
                                 sep = "_")
 
-#### __Alpha ####
+#### _Alpha ####
 leveneTest(exp$map_loaded$rich ~ exp$map_loaded$Salt) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = exp$map_loaded)
 Anova(m, type = "II") # Salt sig, estuary and depth not sig
@@ -5980,7 +7261,7 @@ ggplot(alpha_long, aes(reorder(Salt, value, mean), value)) +
         strip.text = element_text(size = 10))
 dev.off()
 
-#### __Beta ####
+#### _Beta ####
 exp_bc <- calc_dm(exp$data_loaded)
 set.seed(1150)
 adonis2(exp_bc ~ Estuary + Salt + Depth, data = exp$map_loaded) # All
@@ -6037,7 +7318,7 @@ pdf("InitialFigs/Comb_Exp_PCoA.pdf", width = 7, height = 5)
 plot_grid(p_noleg2, leg2, rel_widths = c(5,1))
 dev.off()
 
-#### __Taxa ####
+#### _Taxa ####
 exp_phyla <- summarize_taxonomy(exp, level = 2, report_higher_tax = F)
 plot_ts_heatmap(exp_phyla, exp$map_loaded, 0.01, 'EstSalt', rev_taxa = T) +
   coord_flip() +
@@ -6212,7 +7493,7 @@ ggplot(exp_barsGu, aes(Salt, mean_value, fill = taxon)) +
 dev.off()
 taxa_summary_by_sample_type(exp_guilds, exp$map_loaded, 'EstSalt', 0.01, 'KW')
 
-#### __Methano ####
+#### _Methano ####
 # Look at methanogens (careful to do this accurately!)
 tax_sum_families_meth <- summarize_taxonomy(exp, level = 5, 
                                             report_higher_tax = F)
@@ -6249,7 +7530,7 @@ ggplot(exp_barsMethano, aes(Salt, mean_value, fill = taxon)) +
         axis.line.y = element_blank())
 dev.off()
 
-#### __Desulfo ####
+#### _Desulfo ####
 # Subset taxa to SRB and SRB_syn guilds
 exp_srb <- filter_taxa_from_input(exp,
                                   taxa_to_keep = c("SRB", "SRB_syn"),
@@ -6285,7 +7566,7 @@ ggplot(exp_barsDesulfo, aes(Salt, mean_value, fill = taxon)) +
         legend.text = element_text(size = 10))
 dev.off()
 
-#### __Simper ####
+#### _Simper ####
 exp_sim <- simper(t(exp$data_loaded), 
                   exp$map_loaded$Salt)
 exp_s <- summary(exp_sim)
@@ -6313,7 +7594,7 @@ write_xlsx(exp_df1,
            "simper_results_comb_exp.xlsx",
            format_headers = F)
 
-#### __Multipatt ####
+#### _Multipatt ####
 set.seed(1202)
 exp_mp <- multipatt(t(exp$data_loaded), 
                     exp$map_loaded$Salt, 

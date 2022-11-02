@@ -95,7 +95,7 @@ metaDE <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_DE.xlsx",
          sed_Cu_mgL = NA, 
          sed_Zn_mgL = NA,
          DIC_mgL = NA) %>%
-  select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
+  dplyr::select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
          Conductivity_uS_cm, CH4_pw_air_ppmv,
          CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
          NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
@@ -107,7 +107,8 @@ metaDE <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_DE.xlsx",
          sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
          sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
          sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
-         N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	SRP_umol_m2_h,	DON_umol_m2_h)
+         N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
+         SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
 
 
 
@@ -125,7 +126,7 @@ NC_GHG <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_NC.xlsx",
 NC_pH <- read_excel("~/Documents/GitHub/EastCoast/Soil pH-Jessie.xls",
                     sheet = 2) %>%
   group_by(sampleID) %>%
-  summarize(pH = mean(pH)) %>%
+  dplyr::summarize(pH = mean(pH)) %>%
   filter(sampleID != "Not sequenced")
 metaNC <- left_join(NC_chem, NC_GHG, by = "bgcID") %>%
   filter(`Hydrology 2` == "Flooded",
@@ -197,20 +198,22 @@ metaNC <- left_join(NC_chem, NC_GHG, by = "bgcID") %>%
          sed_Mn_mgL = NA, 
          sed_Cu_mgL = NA, 
          sed_Zn_mgL = NA,
-         DIC_mgL = NA) %>%
-  select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
-         Conductivity_uS_cm, CH4_pw_air_ppmv,
-         CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
-         NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
-         CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
-         Cl_mgL, SO4_mgL, NH4_mgL, NO3_mgL, pH, PO4_mgL, 
-         Fe_mgL, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d,
-         TOC_mgL, TN_mgL, Br_mgL, DIN_mgL, DON_mgL, DOC_mgL, DIC_mgL, Na_mgL,
-         K_mgL, Ca_mgL, Mn_mgL, Mg_mgL, Cu_mgL, Zn_mgL,
-         sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
-         sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
-         sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
-         N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	SRP_umol_m2_h,	DON_umol_m2_h)
+         DIC_mgL = NA,
+         Porosity = NA) %>%
+  dplyr::select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
+                Conductivity_uS_cm, CH4_pw_air_ppmv,
+                CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
+                NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
+                CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
+                Cl_mgL, SO4_mgL, NH4_mgL, NO3_mgL, pH, PO4_mgL, 
+                Fe_mgL, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d,
+                TOC_mgL, TN_mgL, Br_mgL, DIN_mgL, DON_mgL, DOC_mgL, DIC_mgL, Na_mgL,
+                K_mgL, Ca_mgL, Mn_mgL, Mg_mgL, Cu_mgL, Zn_mgL,
+                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
+                sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
+                N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
+                SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
 
 
 
@@ -270,20 +273,22 @@ metaSC <- read_excel("~/Documents/GitHub/EastCoast/Nov 2011 data from Brookgreen
          sed_Fe_mgL = NA, 
          sed_Mn_mgL = NA, 
          sed_Cu_mgL = NA, 
-         sed_Zn_mgL = NA) %>%
-  select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
-         Conductivity_uS_cm, CH4_pw_air_ppmv,
-         CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
-         NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
-         CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
-         Cl_mgL, SO4_mgL, NH4_mgL, NO3_mgL, pH, PO4_mgL, 
-         Fe_mgL, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d,
-         TOC_mgL, TN_mgL, Br_mgL, DIN_mgL, DON_mgL, DOC_mgL, DIC_mgL, Na_mgL,
-         K_mgL, Ca_mgL, Mn_mgL, Mg_mgL, Cu_mgL, Zn_mgL,
-         sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
-         sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
-         sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
-         N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	SRP_umol_m2_h,	DON_umol_m2_h)
+         sed_Zn_mgL = NA,
+         Porosity = NA) %>%
+  dplyr::select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
+                Conductivity_uS_cm, CH4_pw_air_ppmv,
+                CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
+                NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
+                CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
+                Cl_mgL, SO4_mgL, NH4_mgL, NO3_mgL, pH, PO4_mgL, 
+                Fe_mgL, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d,
+                TOC_mgL, TN_mgL, Br_mgL, DIN_mgL, DON_mgL, DOC_mgL, DIC_mgL, Na_mgL,
+                K_mgL, Ca_mgL, Mn_mgL, Mg_mgL, Cu_mgL, Zn_mgL,
+                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
+                sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
+                N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
+                SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
 
 
 #### SF Biogeochem ####
@@ -354,20 +359,22 @@ metaSF <- read.delim("~/Documents/GitHub/SF_microbe_methane/data/meta/SF_sal_met
          PAR_uE_m2_s = NA,
          CH4_pot_umol_gdw_h = NA, 
          CO2_pot_umol_gdw_h = NA,
-         DIC_mgL = NA) %>%
-  select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
-         Conductivity_uS_cm, CH4_pw_air_ppmv,
-         CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
-         NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
-         CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
-         Cl_mgL, SO4_mgL, NH4_mgL, NO3_mgL, pH, PO4_mgL, 
-         Fe_mgL, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d,
-         TOC_mgL, TN_mgL, Br_mgL, DIN_mgL, DON_mgL, DOC_mgL, DIC_mgL, Na_mgL,
-         K_mgL, Ca_mgL, Mn_mgL, Mg_mgL, Cu_mgL, Zn_mgL,
-         sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
-         sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
-         sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
-         N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	SRP_umol_m2_h,	DON_umol_m2_h)
+         DIC_mgL = NA,
+         Porosity = NA) %>%
+  dplyr::select(Estuary, sampleID, Salinity_calcd_ppt, Salinity, Salinity_ppt_all,
+                Conductivity_uS_cm, CH4_pw_air_ppmv,
+                CH4_ug_m2_h, N2O_ug_m2_h, CO2_ug_m2_h,
+                NEE_mgC_m2_m, GEP_mgC_m2_m, PAR_uE_m2_s,
+                CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
+                Cl_mgL, SO4_mgL, NH4_mgL, NO3_mgL, pH, PO4_mgL, 
+                Fe_mgL, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d,
+                TOC_mgL, TN_mgL, Br_mgL, DIN_mgL, DON_mgL, DOC_mgL, DIC_mgL, Na_mgL,
+                K_mgL, Ca_mgL, Mn_mgL, Mg_mgL, Cu_mgL, Zn_mgL,
+                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg,
+                sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
+                N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
+                SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
 
 # Something is of about salinity and Cl
 m <- lm(Cl_mgL/1000 ~ Salinity, data = metaSF)
@@ -401,7 +408,7 @@ write.csv(metaComb, "biogeochem_all_clean.csv")
 metaComb <- read.csv("biogeochem_all_clean.csv") %>%
   mutate(Estuary = factor(Estuary,
                           levels = c("Waccamaw", "Alligator", "Delaware", "SF"))) %>%
-  select(-Salinity_calcd_ppt, -Salinity)
+  dplyr::select(-Salinity_calcd_ppt, -Salinity)
 
 
 
@@ -418,7 +425,7 @@ metaComb_long <- melt(metaComb,
 # Sort by sample size
 metaComb_long_n <- metaComb_long %>%
   group_by(variable) %>%
-  summarize(n = sum(!is.na(value))) %>%
+  dplyr::summarize(n = sum(!is.na(value))) %>%
   arrange(desc(n))
 
 metaComb_long$variable <- factor(metaComb_long$variable,
@@ -559,5 +566,84 @@ ggplot(metaComb, aes(Salinity_ppt_all, CH4_ug_m2_h)) +
        y = expression(""*CH[4]*" flux (µg/"*m^2*"/h)")) +
   theme_bw() +
   theme(legend.position = "none")
+dev.off()
+
+# Subset SF data to the lower salinity sites
+# Try mesohaline < 18 ppt and Oligohaline < 5 ppt, and max NC or max DE)
+max(metaDE$Salinity_ppt_all, na.rm = TRUE)
+max(metaNC$Salinity_ppt_all, na.rm = TRUE)
+max(metaSC$Salinity_ppt_all, na.rm = TRUE)
+max(metaSF$Salinity_ppt_all, na.rm = TRUE)
+
+metaComb_18ppt <- subset(metaComb, Salinity_ppt_all <= 18)
+pdf("InitialFigs/Comb_All_CH4_Salinity_18ppt.pdf", width = 8, height = 3)
+ggplot(metaComb_18ppt, aes(Salinity_ppt_all, CH4_ug_m2_h)) +
+  geom_point(aes(color = Estuary)) +
+  geom_smooth(method = "lm") +
+  scale_y_log10() +
+  scale_color_viridis_d() +
+  facet_wrap(~ Estuary, ncol = 4) +
+  labs(x = "Salinity (ppt)",
+       y = expression(""*CH[4]*" flux (µg/"*m^2*"/h)")) +
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+metaComb_5ppt <- subset(metaComb, Salinity_ppt_all <= 5)
+pdf("InitialFigs/Comb_All_CH4_Salinity_5ppt.pdf", width = 8, height = 3)
+ggplot(metaComb_5ppt, aes(Salinity_ppt_all, CH4_ug_m2_h)) +
+  geom_point(aes(color = Estuary)) +
+  geom_smooth(method = "lm") +
+  scale_y_log10() +
+  scale_color_viridis_d() +
+  facet_wrap(~ Estuary, ncol = 4) +
+  labs(x = "Salinity (ppt)",
+       y = expression(""*CH[4]*" flux (µg/"*m^2*"/h)")) +
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+metaComb_12.5ppt <- subset(metaComb, Salinity_ppt_all <= max(metaNC$Salinity_ppt_all, na.rm = TRUE))
+pdf("InitialFigs/Comb_All_CH4_Salinity_12.5ppt.pdf", width = 8, height = 3)
+ggplot(metaComb_12.5ppt, aes(Salinity_ppt_all, CH4_ug_m2_h)) +
+  geom_point(aes(color = Estuary)) +
+  geom_smooth(method = "lm") +
+  scale_y_log10() +
+  scale_color_viridis_d() +
+  facet_wrap(~ Estuary, ncol = 4) +
+  labs(x = "Salinity (ppt)",
+       y = expression(""*CH[4]*" flux (µg/"*m^2*"/h)")) +
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+metaComb_7.5ppt <- subset(metaComb, Salinity_ppt_all <= max(metaDE$Salinity_ppt_all, na.rm = TRUE))
+pdf("InitialFigs/Comb_All_CH4_Salinity_7.5ppt.pdf", width = 8, height = 3)
+ggplot(metaComb_7.5ppt, aes(Salinity_ppt_all, CH4_ug_m2_h)) +
+  geom_point(aes(color = Estuary)) +
+  geom_smooth(method = "lm") +
+  scale_y_log10() +
+  scale_color_viridis_d() +
+  facet_wrap(~ Estuary, ncol = 4) +
+  labs(x = "Salinity (ppt)",
+       y = expression(""*CH[4]*" flux (µg/"*m^2*"/h)")) +
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+#### _CH4/CO2 ####
+pdf("InitialFigs/Comb_All_CH4_CO2.pdf", width = 8, height = 3)
+ggplot(metaComb, aes(CO2_ug_m2_h, CH4_ug_m2_h)) +
+  geom_point(aes(color = Estuary)) +
+  geom_smooth(method = "lm") +
+  scale_y_log10() +
+  scale_color_viridis_d() +
+  facet_wrap(~ Estuary, ncol = 4) +
+  labs(x = expression(""*CO[2]*" flux (µg/"*m^2*"/h)"),
+       y = expression(""*CH[4]*" flux (µg/"*m^2*"/h)")) +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.spacing = unit(1.5, "lines"),
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"))
 dev.off()
 
