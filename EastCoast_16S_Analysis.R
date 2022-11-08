@@ -2244,7 +2244,7 @@ dev.off()
 env <- nc$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, N2O_ug_m2_h, Salinity_ppt_all, 
                 TOC_mgL, TN_mgL, NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL, Br_mgL, NO3_mgL,
-                DIN_mgL, DON_mgL)
+                DIN_mgL, DON_mgL, pH)
 env_nona <- na.omit(env)
 
 # Corrplot
@@ -4867,10 +4867,19 @@ dev.off()
 
 #### ...................................... ####
 #### 7. Comparison Overview ####
-input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+# input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+input_filt_rare <- readRDS("input_filt_rare_comb_wBGC.rds")
 input_filt_rare$map_loaded$Estuary <- factor(input_filt_rare$map_loaded$Estuary,
                                              levels = c("Waccamaw", "Alligator",
                                                         "Delaware", "SF"))
+input_filt_rare$map_loaded$Depth2 <- recode_factor(input_filt_rare$map_loaded$Depth,
+                                                   " 0-5" = "0-5",
+                                                   " 5-15" = "5-15",
+                                                   "0.02" = "0-5",
+                                                   "0.025" = "0-5",
+                                                   "0.1" = "5-15",
+                                                   "0.12" = "5-15",
+                                                   "0.125" = "5-15")
 input_filt_rare_abund <- filter_taxa_from_input(input_filt_rare,
                                                 filter_thresh = 0.05) # 94247 taxa removed
 
@@ -5554,62 +5563,54 @@ dev.off()
 # Note, porewater chemistry is only on D2 samples (5-15 cm depth)
 
 # Get variables
-env <- sf$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
-                Salinity_ppt_all, SO4_mgL, DOC_mgL, Fe_mgL, Mn_mgL, Cu_mgL, Zn_mgL,
-                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
-                sed_per_C, sed_per_N, sed_CN, sed_Bulk_dens,
-                sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL)
-env_nona <- na.omit(env)
+env <- input_filt_rare$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, Salinity_ppt_all, pH)
+env_nona <- na.omit(env) # n = 208
 
 # Corrplot
 C <- cor(env_nona)
 corrplot(C, method = "number", type = "lower", 
          tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
-pdf("InitialFigs/SF_BGC_corr.pdf", width = 7, height = 5)
+pdf("InitialFigs/Comb_All_BGC_corr.pdf", width = 7, height = 5)
 meth_corr_by_bgc(env_nona = env_nona)
 dev.off()
 
 # Envfit
-pcoa <- cmdscale(sf_bc, k = nrow(sf$map_loaded) - 1, eig = T)
+pcoa <- cmdscale(bc, k = nrow(input_filt_rare$map_loaded) - 1, eig = T)
 set.seed(100)
 ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
 ef
 arrow_factor <- ordiArrowMul(ef)
-manual_factor <- 0.5
+manual_factor <- 0.36
 vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
   mutate(Dim1 = Dim1 * manual_factor,
          Dim2 = Dim2 * manual_factor) %>%
   mutate(variables = rownames(.)) %>%
   filter(ef$vectors$pvals < 0.05) %>%
-  filter(variables != "sed_Cl_mgL") %>%
-  filter(variables != "sed_SO4_mgL") %>%
-  mutate(shortnames = c("CH4", "CO2", "Salinity", "SO4", "DOC", "Cu",
-                        "Zn", "sed_pH", "sed_NH4", "C", "N", "C:N",
-                        "BD", "sed_Fe", "sed_Mn", "sed_Cu", "sed_Zn"))
-# Note, deleted sediment CL and SO4 as they were very similar to porewater
+  mutate(shortnames = c("CH4", "CO2", "Salinity", "pH"))
 
 # Plot with significant vectors
 ordiplot(pcoa)
 plot(ef, p.max = 0.05, cex = 0.5)
 pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
 pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
-sf$map_loaded$Axis01 <- scores(pcoa)[,1]
-sf$map_loaded$Axis02 <- scores(pcoa)[,2]
-micro.hulls <- ddply(sf$map_loaded, c("Salt"), find_hull)
-g <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
+input_filt_rare$map_loaded$Axis01 <- scores(pcoa)[,1]
+input_filt_rare$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(input_filt_rare$map_loaded, c("Estuary"), find_hull)
+g <- ggplot(input_filt_rare$map_loaded, aes(Axis01, Axis02)) +
   geom_polygon(data = micro.hulls, 
-               aes(colour = Salt, fill = Salt),
+               aes(colour = Estuary, fill = Estuary),
                alpha = 0.1, show.legend = F) +
-  geom_point(size = 3, alpha = 0.8, aes(colour = Salt, shape = Depth),
+  geom_point(size = 3, alpha = 0.5, aes(colour = Estuary, shape = Depth2),
              show.legend = T) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = ""),
        shape = "Depth (cm)",
-       colour = "Salinity",
-       fill = "Salinity") +
-  scale_fill_viridis_d() +
-  scale_colour_viridis_d(guide = guide_legend(override.aes = list(shape = 15))) +
+       colour = "Estuary",
+       fill = "Estuary") +
+  scale_fill_viridis_d(guide = guide_legend(override.aes = list(alpha = 1))) +
+  scale_colour_viridis_d(guide = guide_legend(override.aes = list(alpha = 1, shape = 15))) +
+  guides(shape = guide_legend(override.aes = list(alpha = 1))) +
   theme_bw() +  
   theme(legend.position = "right",
         axis.title = element_text(face = "bold", size = 12), 
@@ -5619,20 +5620,17 @@ g <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
                arrow = arrow(length = unit(0.5, "cm")),
                colour = "gray", alpha = 0.5,
                inherit.aes = FALSE) + 
-  geom_text(data = subset(vec.df, shortnames != "SO4"),
+  geom_text(data = vec.df,
             aes(x = Dim1, y = Dim2, label = shortnames),
-            size = 3, color = "black") +
-  geom_text(data = subset(vec.df, shortnames == "SO4"),
-            aes(x = Dim1, y = Dim2 - 0.015, label = shortnames),
             size = 3, color = "black") +
   coord_fixed()
 g
-pdf("InitialFigs/SF_PCoA_wBGC.pdf", width = 6, height = 4)
+pdf("InitialFigs/Comb_All_PCoA_wBGC.pdf", width = 6, height = 4)
 g
 dev.off()
 
 # Ordistep
-comm_nona <- as.data.frame(t(sf$data_loaded)) %>%
+comm_nona <- as.data.frame(t(input_filt_rare$data_loaded)) %>%
   filter(rownames(.) %in% rownames(env_nona))
 mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
 mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
@@ -5641,18 +5639,18 @@ mod
 mod$anova #
 
 # Plot correlations for different taxonomic levels at a given % relative abundance threshold
-pdf("InitialFigs/SF_Phyla_CH4.pdf", width = 7, height = 5)
-meth_corr_by_taxonomy(input = sf, level = 2, threshold = 0.5)
+pdf("InitialFigs/Comb_All_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 2, threshold = 0.5)
 dev.off()
-meth_corr_by_taxonomy(input = sf, level = 3, threshold = 0.5)
-meth_corr_by_taxonomy(input = sf, level = 4, threshold = 0.5)
-meth_corr_by_taxonomy(input = sf, level = 5, threshold = 0.5)
-meth_corr_by_taxonomy(input = sf, level = 6, threshold = 0.5)
-meth_corr_by_taxonomy(input = sf, level = 8, threshold = 0.5)
-pdf("InitialFigs/SF_Guilds_CH4.pdf", width = 7, height = 5)
-meth_corr_by_taxonomy(input = sf, level = 9, threshold = 0)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 8, threshold = 0.5) 
+# ASV4, ASV 3 pos., ASV2 neg.
+pdf("InitialFigs/Comb_All_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 9, threshold = 0)
 dev.off()
-
 
 
 
@@ -5660,12 +5658,10 @@ dev.off()
 #### 8. Comparison Field Control ####
 # Only look at field soils (no manipulations or incubations)
 # Classify as fresh/oligo/meso/poly for broad salinity grouping
-# All sites
-# Archaea
-# Bacteria
 
 #### _Setup ####
-input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+# input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+input_filt_rare <- readRDS("input_filt_rare_comb_wBGC.rds")
 input_filt_rare$map_loaded <- input_filt_rare$map_loaded %>%
   mutate(Estuary = factor(Estuary,
                           levels = c("Waccamaw", "Alligator", "Delaware", "SF")),
@@ -6479,6 +6475,101 @@ plot_grid(field.hm.clean, field.bp.y, field.l, NULL, nrow = 2, ncol = 2,
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
 
+#### _BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, porewater chemistry is only on D2 samples (5-15 cm depth)
+
+# Get variables
+env <- field$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, Salinity_ppt_all, pH)
+env_nona <- na.omit(env) # n = 169
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/Comb_Control_BGC_corr.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(field_bc, k = nrow(field$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.6
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  mutate(shortnames = c("CH4", "CO2", "Salinity", "pH"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+field$map_loaded$Axis01 <- scores(pcoa)[,1]
+field$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(field$map_loaded, c("Salt"), find_hull)
+g <- ggplot(field$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Salt, fill = Salt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 0.75, aes(colour = Salt, shape = Estuary),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (cm)",
+       colour = "Salinity",
+       fill = "Salinity") +
+  scale_fill_viridis_d(guide = guide_legend(override.aes = list(alpha = 1))) +
+  scale_colour_viridis_d(guide = guide_legend(override.aes = list(alpha = 1, shape = 15))) +
+  guides(shape = guide_legend(override.aes = list(alpha = 1))) +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3, color = "black") +
+  coord_fixed()
+g
+pdf("InitialFigs/Comb_Control_PCoA_wBGC.pdf", width = 7, height = 4)
+g
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(field$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova #
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/Comb_Control_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = field, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = field, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = field, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = field, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = field, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = field, level = 8, threshold = 0.5) 
+# ASV 5, ASV 6 neg
+pdf("InitialFigs/Comb_Control_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = field, level = 9, threshold = 0)
+dev.off()
+
 
 
 #### 9. Comparison Lab Inc ####
@@ -6488,7 +6579,8 @@ dev.off()
 # Delaware and North Carolina
 # Pull out methanogens and sulfate reducers
 #### _Setup ####
-input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+# input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+input_filt_rare <- readRDS("input_filt_rare_comb_wBGC.rds")
 input_filt_rare$map_loaded <- input_filt_rare$map_loaded %>%
   mutate(Estuary = factor(Estuary,
                           levels = c("Waccamaw", "Alligator", "Delaware", "SF")),
@@ -7183,6 +7275,101 @@ plot_grid(lab.hm.clean, lab.bp.y, lab.l, NULL, nrow = 2, ncol = 2,
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
 
+#### _BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, porewater chemistry is only on D2 samples (5-15 cm depth)
+
+# Get variables
+env <- input_filt_rare$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, Salinity_ppt_all, pH)
+env_nona <- na.omit(env) # n = 208
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/Comb_All_BGC_corr.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(bc, k = nrow(input_filt_rare$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.36
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  mutate(shortnames = c("CH4", "CO2", "Salinity", "pH"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+input_filt_rare$map_loaded$Axis01 <- scores(pcoa)[,1]
+input_filt_rare$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(input_filt_rare$map_loaded, c("Estuary"), find_hull)
+g <- ggplot(input_filt_rare$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = Estuary, fill = Estuary),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 0.5, aes(colour = Estuary, shape = Depth2),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (cm)",
+       colour = "Estuary",
+       fill = "Estuary") +
+  scale_fill_viridis_d(guide = guide_legend(override.aes = list(alpha = 1))) +
+  scale_colour_viridis_d(guide = guide_legend(override.aes = list(alpha = 1, shape = 15))) +
+  guides(shape = guide_legend(override.aes = list(alpha = 1))) +
+  theme_bw() +  
+  theme(legend.position = "right",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 3, color = "black") +
+  coord_fixed()
+g
+pdf("InitialFigs/Comb_All_PCoA_wBGC.pdf", width = 6, height = 4)
+g
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(input_filt_rare$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova #
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/Comb_All_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = input_filt_rare, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 8, threshold = 0.5) 
+# ASV4, ASV 3 pos., ASV2 neg.
+pdf("InitialFigs/Comb_All_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = input_filt_rare, level = 9, threshold = 0)
+dev.off()
+
 
 
 #### 10. Comparison Field Exp ####
@@ -7192,7 +7379,8 @@ dev.off()
 # Delaware just look at surface depth, similar to SC depth
 # "Soil Field plots", and "Soil mesocosm"
 #### _Setup ####
-input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+# input_filt_rare <- readRDS("input_filt_rare_comb.rds")
+input_filt_rare <- readRDS("input_filt_rare_comb_wBGC.rds")
 input_filt_rare$map_loaded <- input_filt_rare$map_loaded %>%
   mutate(Estuary = factor(Estuary,
                           levels = c("Waccamaw", "Alligator", "Delaware", "SF")),
@@ -7678,5 +7866,103 @@ pdf("InitialFigs/Comb_Exp_Multipatt.pdf", width = 8, height = 10)
 plot_grid(exp.hm.clean, exp.bp.y, exp.l, NULL, nrow = 2, ncol = 2, 
           rel_widths = c(10,2), rel_heights = c(12, 2), align = "hv", axis = "b")
 dev.off()
+
+#### _BGC ####
+# Add biogeochem. analysis
+# Get variables, make corrplot, envfit, ordination with vectors, ordistep, taxa correlations
+# Note, porewater chemistry is only on D2 samples (5-15 cm depth)
+
+# Get variables
+env <- exp$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, Salinity_ppt_all)
+env_nona <- na.omit(env) # n = 
+
+# Corrplot
+C <- cor(env_nona)
+corrplot(C, method = "number", type = "lower", 
+         tl.cex = 0.5, tl.col = "black", number.cex = 0.5)
+pdf("InitialFigs/Comb_Exp_BGC_corr.pdf", width = 7, height = 5)
+meth_corr_by_bgc(env_nona = env_nona)
+dev.off()
+
+# Envfit
+pcoa <- cmdscale(exp_bc, k = nrow(exp$map_loaded) - 1, eig = T)
+set.seed(100)
+ef <- envfit(pcoa, env, permutations = 999, na.rm = TRUE)
+ef
+arrow_factor <- ordiArrowMul(ef)
+manual_factor <- 0.5
+vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
+  mutate(Dim1 = Dim1 * manual_factor,
+         Dim2 = Dim2 * manual_factor) %>%
+  mutate(variables = rownames(.)) %>%
+  filter(ef$vectors$pvals < 0.05) %>%
+  mutate(shortnames = c("CH4"))
+
+# Plot with significant vectors
+ordiplot(pcoa)
+plot(ef, p.max = 0.05, cex = 0.5)
+pcoaA1 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[1]*100, digits = 1)
+pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
+exp$map_loaded$Axis01 <- scores(pcoa)[,1]
+exp$map_loaded$Axis02 <- scores(pcoa)[,2]
+micro.hulls <- ddply(exp$map_loaded, c("EstSalt"), find_hull)
+g <- ggplot(exp$map_loaded, aes(Axis01, Axis02)) +
+  geom_polygon(data = micro.hulls, 
+               aes(colour = EstSalt, fill = EstSalt),
+               alpha = 0.1, show.legend = F) +
+  geom_point(size = 3, alpha = 0.5, aes(colour = EstSalt, shape = Estuary),
+             show.legend = T) +
+  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
+       y = paste("PC2: ", pcoaA2, "%", sep = ""),
+       shape = "Depth (cm)",
+       colour = "Salt") +
+  scale_fill_manual(values = c("red", "blue", "red", "blue")) +
+  scale_colour_manual(values = c("red", "blue", "red", "blue")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1,
+                                                   shape = 15)),
+         fill = "none") +
+  theme_bw() +  
+  theme(legend.position = "none",
+        axis.title = element_text(face = "bold", size = 12), 
+        axis.text = element_text(size = 10)) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.5, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+            aes(x = Dim1, y = Dim2, label = shortnames),
+            size = 4, color = "black") +
+  coord_fixed()
+plot_grid(g, leg2, rel_widths = c(5,1))
+pdf("InitialFigs/Comb_Exp_PCoA_wBGC.pdf", width = 6, height = 4)
+plot_grid(g, leg2, rel_widths = c(5,1))
+dev.off()
+
+# Ordistep
+comm_nona <- as.data.frame(t(exp$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona))
+mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
+mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # Variables aren't better than null model...
+
+# Plot correlations for different taxonomic levels at a given % relative abundance threshold
+pdf("InitialFigs/Comb_All_Phyla_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = exp, level = 2, threshold = 0.5)
+dev.off()
+meth_corr_by_taxonomy(input = exp, level = 3, threshold = 0.5)
+meth_corr_by_taxonomy(input = exp, level = 4, threshold = 0.5)
+meth_corr_by_taxonomy(input = exp, level = 5, threshold = 0.5)
+meth_corr_by_taxonomy(input = exp, level = 6, threshold = 0.5)
+meth_corr_by_taxonomy(input = exp, level = 8, threshold = 0.5) 
+# ASV4, ASV 3 pos., ASV2 neg.
+pdf("InitialFigs/Comb_All_Guilds_CH4.pdf", width = 7, height = 5)
+meth_corr_by_taxonomy(input = exp, level = 9, threshold = 0)
+dev.off()
+
+
 
 #### End Script ####

@@ -70,30 +70,53 @@ meth_corr_by_bgc <- function(env_nona) {
   methcor_long <- data.frame(Variable = methcor_long_coef$Variable, 
                              Test = methcor_long_coef$variable, 
                              Coefficient = methcor_long_coef$value,
-                             P = methcor_long_pval$value) %>%
+                             P = as.factor(methcor_long_pval$value)) %>%
     mutate(Test = dplyr::recode(Test,
                                 r = "Pearson",
                                 rho = "Spearman",
                                 tau = "Kendall"))
   
   # Plot all of the coefficients (order by rho)
-  meth_corr_plot <- ggplot(methcor_long, aes(reorder(Variable, abs(Coefficient), max), 
-                                             Coefficient, shape = Test, colour = P)) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_point(size = 2, alpha = 0.9) +
-    labs(x = NULL,
-         y = "Correlation coefficient",
-         shape = "Test",
-         colour = "Significance") +
-    scale_colour_manual(values = c("#F8766D", "#619CFF")) +
-    coord_flip() +
-    theme_bw() +
-    theme(legend.position = c(1,0),
-          legend.justification = c(1,0),
-          legend.background = element_blank(),
-          legend.margin = margin(-0.2,0.2,0.1,0.1, unit="cm"),
-          axis.title = element_text(size = 10, face = "bold"),
-          axis.text = element_text(size = 6))
+  # If none significant, use blue, if some significant some not, use blue and red
+  if (length(levels(methcor_long$P)) == 1) {
+    meth_corr_plot <- ggplot(methcor_long, aes(reorder(Variable, abs(Coefficient), max), 
+                                               Coefficient, shape = Test, colour = P)) +
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_point(size = 2, alpha = 0.9) +
+      labs(x = NULL,
+           y = "Correlation coefficient",
+           shape = "Test",
+           colour = "Significance") +
+      scale_colour_manual(values = "#619CFF") +
+      coord_flip() +
+      theme_bw() +
+      theme(legend.position = c(1,0),
+            legend.justification = c(1,0),
+            legend.background = element_blank(),
+            legend.margin = margin(-0.2,0.2,0.1,0.1, unit="cm"),
+            axis.title = element_text(size = 10, face = "bold"),
+            axis.text = element_text(size = 6))
+  }
   
+  if (length(levels(methcor_long$P)) == 2) {
+    meth_corr_plot <- ggplot(methcor_long, aes(reorder(Variable, abs(Coefficient), max), 
+                                               Coefficient, shape = Test, colour = P)) +
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_point(size = 2, alpha = 0.9) +
+      labs(x = NULL,
+           y = "Correlation coefficient",
+           shape = "Test",
+           colour = "Significance") +
+      scale_colour_manual(values = c("#F8766D", "#619CFF")) +
+      coord_flip() +
+      theme_bw() +
+      theme(legend.position = c(1,0),
+            legend.justification = c(1,0),
+            legend.background = element_blank(),
+            legend.margin = margin(-0.2,0.2,0.1,0.1, unit="cm"),
+            axis.title = element_text(size = 10, face = "bold"),
+            axis.text = element_text(size = 6))
+    
+  }
   meth_corr_plot
 }
