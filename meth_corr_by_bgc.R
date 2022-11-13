@@ -1,11 +1,9 @@
-# Function for running correlations with different sets of taxa, subset to a threshold
+# Function for running correlations with each environmental variable in a dataframe with no NAs
 # Procedure:
 # Take an mctoolsr object
-# 1. Divide threshold by 100
-# 2. Summarize taxonomy
-# 3. Get taxa greater than defined threshold of community
-# 4. Run correlations
-# 5. Plot
+# 1. Take environmental dataframe, extract variable of interest, and remove it from df
+# 2. Run correlations
+# 3. Plot
 
 meth_corr_by_bgc <- function(env_nona) {
   

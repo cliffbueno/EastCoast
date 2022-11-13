@@ -7,7 +7,7 @@
 # 4. Run correlations
 # 5. Plot
 
-meth_corr_by_taxonomy <- function(input, level, threshold) {
+meth_corr_by_taxonomy <- function(input, level, threshold, data) {
 
 # Threshold
   threshold <- threshold/100
@@ -89,6 +89,7 @@ methcor_long <- data.frame(Taxon = as.factor(methcor_long_coef$Taxon),
                               rho = "Spearman",
                               tau = "Kendall"))
 
+if (data == "No") {
 # Plot all of the coefficients (order by rho)
 # If none significant, use blue, if some significant some not, use blue and red
 if (length(levels(methcor_long$P)) == 1) {
@@ -132,4 +133,9 @@ if (length(levels(methcor_long$P)) == 2) {
 
 }
 meth_corr_plot
+}
+
+if (data == "Yes") {
+  methcor
+}
 }
