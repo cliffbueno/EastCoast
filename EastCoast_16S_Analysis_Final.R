@@ -44,6 +44,7 @@ library(dendextend) # graphs
 library(corrplot) # correlation plots
 library(pheatmap) # pretty heatmap
 library(gplots) # color ramps
+library(asbio) # Partial R2s
 
 # Functions
 find_hull <- function(df) df[chull(df$Axis01, df$Axis02),]
@@ -80,7 +81,7 @@ Guild_cols <- read.table("~/Documents/GitHub/SF_microbe_methane/data/colors/Guil
 
 
 
-# Input, filter, and rarefy
+# Input, filter, and rarefy (done once, now can input processed file at at 2. Combined)
 input_filt <- readRDS("input_filt_comb_wBGC.rds")
 input_filt$map_loaded <- input_filt$map_loaded %>%
   mutate(Estuary = factor(Estuary,
@@ -322,6 +323,7 @@ leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Estuary) # Homogeneous
 leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Salt) # Homogeneous
 leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Depth) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = frol$map_loaded)
+shapiro.test(m$residuals) # Not normally distributed
 Anova(m, type = "II") # All sig.
 m <- aov(rich ~ EstSalt, data = frol$map_loaded)
 shapiro.test(m$residuals) # Normal
@@ -330,11 +332,19 @@ t <- emmeans(object = m, specs = "EstSalt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "rich",
          y = max(frol$map_loaded$rich)+(max(frol$map_loaded$rich)-min(frol$map_loaded$rich))/20)
+all <- aov(rich ~ Estuary + Salt + Depth, data = frol$map_loaded)
+noEst <- aov(rich ~ Salt + Depth, data = frol$map_loaded)
+noSal <- aov(rich ~ Estuary + Depth, data = frol$map_loaded)
+noDep <- aov(rich ~ Estuary + Salt, data = frol$map_loaded)
+partial.R2(noEst, all)
+partial.R2(noSal, all)
+partial.R2(noDep, all)
 
-leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Estuary) # Almost homogeneous
+leveneTest(frol$map_loaded$shannon ~ frol$map_loaded$Estuary) # Almost homogeneous
 leveneTest(frol$map_loaded$shannon ~ frol$map_loaded$Salt) # Homogeneous
-leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Depth) # Homogeneous
+leveneTest(frol$map_loaded$shannon ~ frol$map_loaded$Depth) # Homogeneous
 m1 <- aov(shannon ~ Estuary + Salt + Depth, data = frol$map_loaded)
+shapiro.test(m1$residuals) # Not normally distributed but using anyway
 Anova(m1, type = "II") # All sig
 m1 <- aov(shannon ~ EstSalt, data = frol$map_loaded)
 shapiro.test(m1$residuals) # Not normal
@@ -343,6 +353,15 @@ t1 <- emmeans(object = m1, specs = "EstSalt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "shannon",
          y = max(frol$map_loaded$shannon)+(max(frol$map_loaded$shannon)-min(frol$map_loaded$shannon))/20)
+all <- aov(shannon ~ Estuary + Salt + Depth, data = frol$map_loaded)
+noEst <- aov(shannon ~ Salt + Depth, data = frol$map_loaded)
+noSal <- aov(shannon ~ Estuary + Depth, data = frol$map_loaded)
+noDep <- aov(shannon ~ Estuary + Salt, data = frol$map_loaded)
+partial.R2(noEst, all)
+partial.R2(noSal, all)
+partial.R2(noDep, all)
+
+# Combined Plot
 label_df <- rbind(t, t1)
 facet_df <- c("rich" = "(a) Richness",
               "shannon" = "(b) Shannon")
@@ -388,7 +407,7 @@ bc <- calc_dm(frol$data_loaded)
 set.seed(100)
 adonis2(bc ~ frol$map_loaded$Estuary + frol$map_loaded$Salt + frol$map_loaded$Depth) # Salt and Depth sig
 anova(betadisper(bc, frol$map_loaded$Estuary)) # Dispersion not homogeneous
-anova(betadisper(bc, frol$map_loaded$Salt)) # Dispersion not homogeneous
+anova(betadisper(bc, frol$map_loaded$Salt)) # Dispersion homogeneous
 anova(betadisper(bc, frol$map_loaded$Depth)) # Dispersion homogeneous
 
 # Get variables
@@ -491,7 +510,7 @@ mod0 <- rda(comm_nona ~ 1, env_nona)  # Model with intercept only
 mod1 <- rda(comm_nona ~ ., env_nona)  # Model with all explanatory variables
 mod <- ordistep(mod0, scope = formula(mod1))
 mod
-mod$anova #
+mod$anova # Salinity, CH4
 
 # Make other PCoAs individually
 sf <- filter_data(frol,
@@ -557,6 +576,13 @@ g2 <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
         plot.title = element_text(vjust = -0.5, size = 12),
         plot.margin = margin(0,0,0,10, "pt"))
 g2
+comm_nona_sf <- as.data.frame(t(sf$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona_sf))
+mod0 <- rda(comm_nona_sf ~ 1, env_nona_sf)  # Model with intercept only
+mod1 <- rda(comm_nona_sf ~ ., env_nona_sf)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # BD, sed_Zn, sed_pH, sed_Cl, sed_CN, sed_Mn, SO4
 
 de <- filter_data(frol,
                   filter_cat = "Estuary",
@@ -616,6 +642,13 @@ g3 <- ggplot(detra$map_loaded, aes(Axis01, Axis02)) +
         plot.title = element_text(vjust = -0.5, size = 12),
         plot.margin = margin(0,0,0,10, "pt"))
 g3
+comm_nona_detra <- as.data.frame(t(detra$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona_detra))
+mod0 <- rda(comm_nona_detra ~ 1, env_nona_detra)  # Model with intercept only
+mod1 <- rda(comm_nona_detra ~ ., env_nona_detra)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # NH4
 
 sc <- filter_data(frol,
                   filter_cat = "Estuary",
@@ -673,6 +706,13 @@ g4 <- ggplot(sc$map_loaded, aes(Axis01, Axis02)) +
         plot.title = element_text(vjust = -0.5, size = 12),
         plot.margin = margin(0,0,0,10, "pt"))
 g4
+comm_nona_sc <- as.data.frame(t(sc$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona_sc))
+mod0 <- rda(comm_nona_sc ~ 1, env_nona_sc)  # Model with intercept only
+mod1 <- rda(comm_nona_sc ~ ., env_nona_sc)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # SOD, CO2
 
 # Note: in initial analysis, thought there was error, but looks like maybe there isn't
 # Just not clear separation, no hard evidence of any sample label error
@@ -730,6 +770,13 @@ g5 <- ggplot(deinc$map_loaded, aes(Axis01, Axis02)) +
         plot.title = element_text(vjust = -0.5, size = 12),
         plot.margin = margin(0,0,0,10, "pt"))
 g5
+comm_nona_deinc <- as.data.frame(t(deinc$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona_deinc))
+mod0 <- rda(comm_nona_deinc ~ 1, env_nona_deinc)  # Model with intercept only
+mod1 <- rda(comm_nona_deinc ~ ., env_nona_deinc)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # Can't do yet, no data
 
 nc <- filter_data(frol,
                   filter_cat = "Estuary",
@@ -785,6 +832,13 @@ g6 <- ggplot(nc$map_loaded, aes(Axis01, Axis02)) +
         plot.title = element_text(vjust = -0.5, size = 12),
         plot.margin = margin(0,0,0,10, "pt"))
 g6
+comm_nona_nc <- as.data.frame(t(nc$data_loaded)) %>%
+  filter(rownames(.) %in% rownames(env_nona_nc))
+mod0 <- rda(comm_nona_nc ~ 1, env_nona_nc)  # Model with intercept only
+mod1 <- rda(comm_nona_nc ~ ., env_nona_nc)  # Model with all explanatory variables
+mod <- ordistep(mod0, scope = formula(mod1))
+mod
+mod$anova # SO4, CH4, PO4
 
 pcoa_plots <- plot_grid(g, g2, g3, g4, g5, g6, ncol = 2)
 fig2 <- plot_grid(pcoa_plots, leg, rel_widths = c(0.85, 0.15))
@@ -813,6 +867,11 @@ barsP <- plot_taxa_bars(tax_sum_phyla,
                        data_only = TRUE) %>%
   mutate(taxon = fct_rev(taxon)) %>%
   left_join(., frol$map_loaded, by = c("group_by" = "sampleID"))
+topphy <- barsP %>%
+  group_by(taxon) %>%
+  summarise(mean = mean(mean_value)) %>%
+  filter(taxon != "Other") %>%
+  arrange(-mean)
 facet_names <- c("Waccamaw" = "Waccamaw",
                  "Alligator" = "Alligator",
                  "Delaware" = "Delaware",
@@ -858,6 +917,10 @@ barsG <- plot_taxa_bars(tax_sum_guilds,
 tallest_bar <- barsG %>%
   group_by(group_by) %>%
   summarise(sum = sum(mean_value))
+topgui <- barsG %>%
+  group_by(taxon) %>%
+  summarise(mean = mean(mean_value)) %>%
+  arrange(-mean)
 gui <- ggplot(barsG, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
   labs(x = "Sample", y = "Relative abundance", fill = "Guild") +
