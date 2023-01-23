@@ -45,6 +45,11 @@ library(corrplot) # correlation plots
 library(pheatmap) # pretty heatmap
 library(gplots) # color ramps
 library(asbio) # Partial R2s
+library(picante) # Trees
+library(iCAMP) # NTI
+library(lsr) # Cohen's d effect size
+library(ape) # Phylogenetics
+library(usmap) # Maps
 
 # Functions
 find_hull <- function(df) df[chull(df$Axis01, df$Axis02),]
@@ -60,6 +65,7 @@ source("~/Documents/GitHub/EastCoast/multiple_correlations.R")
 
 # Plotting
 source("~/Documents/GitHub/EastCoast/cliffplot_taxa_bars.R")
+source("~/Documents/GitHub/EastCoast/plot_venn_diagram2.R")
 
 # Repository path
 setwd("~/Documents/GitHub/EastCoast/")
@@ -394,6 +400,28 @@ frol$map_loaded$Estuary3 <- factor(frol$map_loaded$Estuary3,
                                    levels = c("SF", "Waccamaw", "DE Field", "DE Lab", "Alligator"))
 frol$map_loaded$Est3Salt <- paste(frol$map_loaded$Estuary3, frol$map_loaded$Salt, sep = "_")
 
+# Subsets
+sf <- filter_data(frol,
+                  filter_cat = "Estuary",
+                  keep_vals = "SF")
+de <- filter_data(frol,
+                  filter_cat = "Estuary",
+                  keep_vals = "Delaware")
+detra <- filter_data(de,
+                     filter_cat = "Site",
+                     keep_vals = "Soil mesocosm")
+sc <- filter_data(frol,
+                  filter_cat = "Estuary",
+                  keep_vals = "Waccamaw")
+deinc <- filter_data(de,
+                     filter_cat = "Site",
+                     keep_vals = "Soil incubation")
+nc <- filter_data(frol,
+                  filter_cat = "Estuary",
+                  keep_vals = "Alligator")
+
+
+
 #### _Alpha ####
 leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Estuary) # Homogeneous
 leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Salt) # Homogeneous
@@ -497,7 +525,7 @@ facet_names <- c("rich" = "(a) Richness",
                  "SF" = "SF",
                  "Freshwater" = "Fresh",
                  "Oligohaline" = "Oligo")
-png("FinalFigs/Figure1.png", width = 7, height = 4.5, units = "in", res = 300)
+#png("FinalFigs/Figure1.png", width = 7, height = 4.5, units = "in", res = 300)
 ggplot(alpha_long, aes(ExpEstSalt, value)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
   geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
@@ -524,7 +552,7 @@ ggplot(alpha_long, aes(ExpEstSalt, value)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 8, angle = 90, hjust = 1, vjust = 0.5),
         strip.text = element_text(size = 10))
-dev.off()
+#dev.off()
 
 
 
@@ -642,9 +670,6 @@ mod
 mod$anova # Salinity, CH4
 
 # Make other PCoAs individually
-sf <- filter_data(frol,
-                  filter_cat = "Estuary",
-                  keep_vals = "SF")
 bc_sf <- calc_dm(sf$data_loaded)
 env_sf <- sf$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
@@ -713,12 +738,6 @@ mod <- ordistep(mod0, scope = formula(mod1))
 mod
 mod$anova # BD, sed_Zn, sed_pH, sed_Cl, sed_CN, sed_Mn, SO4
 
-de <- filter_data(frol,
-                  filter_cat = "Estuary",
-                  keep_vals = "Delaware")
-detra <- filter_data(de,
-                     filter_cat = "Site",
-                     keep_vals = "Soil mesocosm")
 bc_detra <- calc_dm(detra$data_loaded)
 env_detra <- detra$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, N2O_ug_m2_h, 
@@ -779,9 +798,6 @@ mod <- ordistep(mod0, scope = formula(mod1))
 mod
 mod$anova # NH4
 
-sc <- filter_data(frol,
-                  filter_cat = "Estuary",
-                  keep_vals = "Waccamaw")
 bc_sc <- calc_dm(sc$data_loaded)
 env_sc <- sc$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, CH4_pw_air_ppmv,
@@ -845,9 +861,6 @@ mod$anova # SOD, CO2
 
 # Note: in initial analysis, thought there was error, but looks like maybe there isn't
 # Just not clear separation, no hard evidence of any sample label error
-deinc <- filter_data(de,
-                     filter_cat = "Site",
-                     keep_vals = "Soil incubation")
 bc_deinc <- calc_dm(deinc$data_loaded)
 env_deinc <- deinc$map_loaded %>%
   dplyr::select(Salinity_ppt_all, 
@@ -907,9 +920,6 @@ mod <- ordistep(mod0, scope = formula(mod1))
 mod
 mod$anova # Can't do yet, no data
 
-nc <- filter_data(frol,
-                  filter_cat = "Estuary",
-                  keep_vals = "Alligator")
 bc_nc <- calc_dm(nc$data_loaded)
 env_nc <- nc$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, N2O_ug_m2_h, Salinity_ppt_all, 
@@ -972,9 +982,9 @@ mod$anova # SO4, CH4, PO4
 pcoa_plots <- plot_grid(g, g2, g3, g4, g5, g6, ncol = 2)
 fig2 <- plot_grid(pcoa_plots, leg, rel_widths = c(0.85, 0.15))
 fig2
-png("FinalFigs/Figure2.png", width = 8, height = 6, units = "in", res = 300)
+#png("FinalFigs/Figure2.png", width = 8, height = 6, units = "in", res = 300)
 fig2
-dev.off()
+#dev.off()
 
 
 #### _Taxa ####
@@ -1081,9 +1091,9 @@ ll <- plot_grid(phy_leg, gui_leg, ncol = 1)
 
 plot_grid(pg, ll, rel_widths = c(0.75, 0.25))
 
-png("Figure3_forPPT.png", width = 6.5, height = 6, units = "in", res = 300)
+#png("Figure3_forPPT.png", width = 6.5, height = 6, units = "in", res = 300)
 pg
-dev.off()
+#dev.off()
 
 # Stats
 # Test effect of salinity class on guilds and top phyla
@@ -1292,7 +1302,7 @@ res_gui <- res_gui_sc %>%
   dplyr::select(Level, Taxon, SF, WA, DEF, DEL, AL)
 
 res <- rbind(res_phy, res_gui)
-write_xlsx(res, "taxa_results_unformatted.xlsx", format_headers = F)
+#write_xlsx(res, "taxa_results_unformatted.xlsx", format_headers = F)
 brewer.pal(12, "Paired")
 
 
@@ -1409,16 +1419,26 @@ leveneTest(CH4_ug_m2_h ~ Salt, data = deinc$map_loaded)
 shapiro.test(deinc$map_loaded$CH4_ug_m2_h)
 t.test(CH4_ug_m2_h ~ Salt, data = deinc$map_loaded) # No data but sig.
 wilcox.test(CH4_ug_m2_h ~ Salt, data = deinc$map_loaded) # No data but sig.
-# No data, extract from Weston et al. 2006 (not 2011! 2011 shows increase with salt)
-# Note these are in umol/cm3
+# No data yet. Data are from Weston et al. 2011. 
+# Nat sent integrated values for now put as D1.
 for (i in 1:nrow(frol$map_loaded)) {
   if (frol$map_loaded$sampleID[i] == "TS_FW_d1_12_1") {
-    frol$map_loaded$CH4_ug_m2_h[i] <- 6.93
+    frol$map_loaded$CH4_ug_m2_h[i] <- 20303.49838
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_FW_d1_12_2") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 84770.97026
   }
 }
 for (i in 1:nrow(frol$map_loaded)) {
   if (frol$map_loaded$sampleID[i] == "TS_SW_d1_12_1") {
-    frol$map_loaded$CH4_ug_m2_h[i] <- 1.61
+    frol$map_loaded$CH4_ug_m2_h[i] <- 32976.95881
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_SW_d1_12_2") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 68221.38115
   }
 }
 
@@ -1450,13 +1470,13 @@ label_df2 <- data.frame("Exp" = c("Obs", "Obs",
                         "x" = c("Freshwater", "Oligohaline", "Freshwater", "Oligohaline",
                                 "Freshwater", "Oligohaline", "Freshwater", "Oligohaline",
                                 "Freshwater", "Oligohaline"),
-                        "label" = c("a", "b", "a", "b", "", "", "a", "b", "a", "b")) %>%
+                        "label" = c("a", "b", "a", "b", "", "", "", "", "a", "b")) %>%
   mutate(Exp = factor(Exp, levels = c("Obs", "Field", "Lab"))) %>%
   mutate(Estuary2 = factor(Estuary2, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
            
 # Only use top depth (data is repeated)
 # Remove depth fill
-png("FinalFigs/Figure5.png", width = 8, height = 4, units = "in", res = 300)
+#png("FinalFigs/Figure5.png", width = 8, height = 4, units = "in", res = 300)
 ggplot(subset(frol$map_loaded, Depth == "0-5"), aes(Salt, CH4_ug_m2_h)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
   geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
@@ -1482,7 +1502,7 @@ ggplot(subset(frol$map_loaded, Depth == "0-5"), aes(Salt, CH4_ug_m2_h)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
         strip.text = element_text(size = 10))
-dev.off()
+#dev.off()
   
 
 # Correlations between CH4 and BGC and Guilds by each site
@@ -1500,6 +1520,7 @@ sf_corP <- meth_corr_by_taxonomy(input = sf, level = 2, threshold = 0.5, data = 
 sf_res <- rbind(sf_cor, sf_corG, sf_corP) %>%
   rename(SF_rho = rho,
          SF_sig = SpearmanPcut)
+sf_res$Variable <- replace(sf_res$Variable, sf_res$Variable == "sed_pH" , "pH")
 
 # Note, DE is just field, because no lab methane data yet
 detra_cor <- multiple_correlations(env_nona = env_nona_detra, var = "CH4_ug_m2_h") %>%
@@ -1588,17 +1609,17 @@ CH4_res <- data.frame("Variable" = c("CO2_ug_m2_h", "sed_per_org", "DOC_mgL",
 
 # Pretty heatmap
 CH4_res_meta <- CH4_res %>%
-  dplyr::select(Shortname, Type, Prediction, SF_sig, DE_sig, AL_sig, WA_sig) %>%
+  dplyr::select(Shortname, Type, Prediction, SF_sig, WA_sig, DE_sig, AL_sig) %>%
   mutate_if(is.character, as.factor)
 CH4_res_mat <- CH4_res %>%
   column_to_rownames(var = "Shortname") %>%
-  dplyr::select(SF_rho, DE_rho, AL_rho, WA_rho) %>%
+  dplyr::select(SF_rho, WA_rho, DE_rho, AL_rho) %>%
   as.matrix()
 ann_rows <- data.frame(row.names = rownames(CH4_res_mat), 
-                       WA_sig = CH4_res_meta$WA_sig,
-                       AL_sig = CH4_res_meta$AL_sig,
-                       DE_sig = CH4_res_meta$DE_sig,
-                       SF_sig = CH4_res_meta$SF_sig,
+                       "AL_sig" = CH4_res_meta$`AL_sig`,
+                       "DE_sig" = CH4_res_meta$`DE_sig`,
+                       "WA_sig" = CH4_res_meta$`WA_sig`,
+                       "SF_sig" = CH4_res_meta$`SF_sig`,
                        Prediction = CH4_res_meta$Prediction,
                        Type = CH4_res_meta$Type)
 ann_colors <- list(Type = c(Flux = "#FFFF99", 
@@ -1606,13 +1627,13 @@ ann_colors <- list(Type = c(Flux = "#FFFF99",
                             Sediment = "#B15928"),
                    Prediction = c(Positive = "red", 
                                   Negative = "blue"),
-                   SF_sig = c(`Pfdr < 0.05` = "black", 
+                   "SF_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"),
-                   DE_sig = c(`Pfdr < 0.05` = "black", 
+                   "DE_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"),
-                   AL_sig = c(`Pfdr < 0.05` = "black", 
+                   "AL_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"),
-                   WA_sig = c(`Pfdr < 0.05` = "black", 
+                   "WA_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"))
 pheatmap(CH4_res_mat,
          legend = T,
@@ -1624,8 +1645,9 @@ pheatmap(CH4_res_mat,
          #na_col = "gray",
          scale = "none",
          angle_col = 315,
-         fontsize = 10,
-         fontsize_row = 10,
+         fontsize = 6,
+         fontsize_row = 9,
+         fontsize_col = 9,
          annotation_row = ann_rows,
          annotation_colors = ann_colors,
          cluster_rows = F,
@@ -1635,7 +1657,8 @@ pheatmap(CH4_res_mat,
          width = 5,
          height = 7)
 dev.off()
-
+dev.set(dev.next())
+dev.set(dev.next())
 show_col(brewer_pal(palette = "Paired")(12))
 brewer_pal(palette = "Paired")(12)
 
@@ -1808,8 +1831,444 @@ labM <- ggplot(lab_barsMethanobacteriaceae, aes(Salt, mean_value, fill = taxon))
 p <- plot_grid(labP, labG, labM, ncol = 1, rel_heights = c(0.35, 0.3, 0.35))
 l <- plot_grid(lab_legP, lab_legG, lab_legM, ncol = 1, align = "v", axis = "b",
                rel_heights = c(0.4, 0.33, 0.5))
-png("FinalFigs/Figure7.png", width = 5, height = 7, units = "in", res = 300)
+#png("FinalFigs/Figure7.png", width = 5, height = 7, units = "in", res = 300)
 plot_grid(p, l, ncol = 2, align = "h", rel_widths = c(0.57, 0.43))
+#dev.off()
+
+
+
+#### 4. Ecology ####
+# Need to delve into some ecological dynamics to explain discrepancies between lab and field
+# Make Venn, Jaccard vs. Bray, NTI
+
+#### _Venn ####
+source("~/Documents/GitHub/EastCoast/plot_venn_diagram2.R")
+
+plot_venn_diagram2_mirror(sf, "Salt", 0.000000000000000000000000000001)
+plot_venn_diagram2(sc, "Salt", 0.000000000000000000000000000001)
+plot_venn_diagram2(detra, "Salt", 0.000000000000000000000000000001)
+plot_venn_diagram2_mirror(deinc, "Salt", 0.000000000000000000000000000001)
+plot_venn_diagram2(nc, "Salt", 0.000000000000000000000000000001)
+
+png("FinalFigs/FigureS2.png", width = 9, height = 6, units = "in", res = 300)
+plot_grid(plot_venn_diagram2_mirror(sf, "Salt", 0.000000000000000000000000000001),
+          plot_venn_diagram2(sc, "Salt", 0.000000000000000000000000000001),
+          plot_venn_diagram2(detra, "Salt", 0.000000000000000000000000000001),
+          plot_venn_diagram2_mirror(deinc, "Salt", 0.000000000000000000000000000001),
+          plot_venn_diagram2(nc, "Salt", 0.000000000000000000000000000001),
+          labels = c("(a) SF", "(b) WA", "(c) DE Field", 
+                     "(d) DE Lab", "(e) AL"))
 dev.off()
 
 
+
+#### _Jaccard/Bray ####
+# Bray
+bray.distance <- calc_dm(frol$data_loaded, method = "bray_sq_trans")
+bac_bray_mat <- as.matrix(bray.distance)
+bac_bray_mat[upper.tri(bac_bray_mat, diag = TRUE)] <- NA
+bac_bray_df <- as.data.frame(bac_bray_mat)
+bac_bray_df$sampleID <- rownames(bac_bray_df)
+bac_bray_df_long <- melt(bac_bray_df, id.vars = "sampleID")
+bac_bray_df_long <- na.omit(bac_bray_df_long)
+nrow(bac_bray_df_long) == (nrow(frol$map_loaded)*(nrow(frol$map_loaded)-1))/2
+bac_bray_df_long$sampleID <- as.factor(bac_bray_df_long$sampleID)
+site_sal <- dplyr::select(frol$map_loaded, sampleID, Estuary3, Salt, Estuary2, Exp)
+bac_bray_df_long <- inner_join(bac_bray_df_long, site_sal, 
+                               by = c("sampleID" = "sampleID"))
+bac_bray_df_long <- inner_join(bac_bray_df_long, site_sal, 
+                               by = c("variable" = "sampleID"))
+bac_bray_df_long <- subset(bac_bray_df_long, Estuary3.x == Estuary3.y)
+for (i in 1:nrow(bac_bray_df_long)) {
+  ifelse(bac_bray_df_long$Salt.x[i] == bac_bray_df_long$Salt.y[i],
+         bac_bray_df_long$comparison[i] <- "within",
+         bac_bray_df_long$comparison[i] <- "between")
+}
+bac_bray_df_long$comparison <- as.factor(bac_bray_df_long$comparison)
+bac_bray_df_long_sf <- subset(bac_bray_df_long, Estuary3.x == "SF")
+bac_bray_df_long_wa <- subset(bac_bray_df_long, Estuary3.x == "Waccamaw")
+bac_bray_df_long_def <- subset(bac_bray_df_long, Estuary3.x == "DE Field")
+bac_bray_df_long_del <- subset(bac_bray_df_long, Estuary3.x == "DE Lab")
+bac_bray_df_long_al <- subset(bac_bray_df_long, Estuary3.x == "Alligator")
+table(bac_bray_df_long_sf$comparison)
+table(bac_bray_df_long_wa$comparison)
+table(bac_bray_df_long_def$comparison)
+table(bac_bray_df_long_del$comparison)
+table(bac_bray_df_long_al$comparison)
+t.test(value ~ comparison, data = bac_bray_df_long_sf) # Sig
+t.test(value ~ comparison, data = bac_bray_df_long_wa) # Sig
+t.test(value ~ comparison, data = bac_bray_df_long_def) # NSD
+t.test(value ~ comparison, data = bac_bray_df_long_del) # NSD
+t.test(value ~ comparison, data = bac_bray_df_long_al) # Sig
+cohensD(value ~ comparison, data = bac_bray_df_long_sf) # 1.23
+cohensD(value ~ comparison, data = bac_bray_df_long_wa) # 0.97
+cohensD(value ~ comparison, data = bac_bray_df_long_def) # 0.14
+cohensD(value ~ comparison, data = bac_bray_df_long_del) # 0.03
+cohensD(value ~ comparison, data = bac_bray_df_long_al) # 1.02
+bac_bray_df_long_multi <- rbind(bac_bray_df_long_sf,
+                                bac_bray_df_long_wa,
+                                bac_bray_df_long_def,
+                                bac_bray_df_long_del,
+                                bac_bray_df_long_al)
+
+# Jaccard
+jac.distance <- calc_dm(frol$data_loaded, method = "jaccard")
+bac_jac_mat <- as.matrix(jac.distance)
+bac_jac_mat[upper.tri(bac_jac_mat, diag = TRUE)] <- NA
+bac_jac_df <- as.data.frame(bac_jac_mat)
+bac_jac_df$sampleID <- rownames(bac_jac_df)
+bac_jac_df_long <- melt(bac_jac_df, id.vars = "sampleID")
+bac_jac_df_long <- na.omit(bac_jac_df_long)
+nrow(bac_jac_df_long) == (nrow(frol$map_loaded)*(nrow(frol$map_loaded)-1))/2
+bac_jac_df_long$sampleID <- as.factor(bac_jac_df_long$sampleID)
+site_sal <- dplyr::select(frol$map_loaded, sampleID, Estuary3, Salt, Estuary2, Exp)
+bac_jac_df_long <- inner_join(bac_jac_df_long, site_sal, 
+                               by = c("sampleID" = "sampleID"))
+bac_jac_df_long <- inner_join(bac_jac_df_long, site_sal, 
+                               by = c("variable" = "sampleID"))
+bac_jac_df_long <- subset(bac_jac_df_long, Estuary3.x == Estuary3.y)
+for (i in 1:nrow(bac_jac_df_long)) {
+  ifelse(bac_jac_df_long$Salt.x[i] == bac_jac_df_long$Salt.y[i],
+         bac_jac_df_long$comparison[i] <- "within",
+         bac_jac_df_long$comparison[i] <- "between")
+}
+bac_jac_df_long$comparison <- as.factor(bac_jac_df_long$comparison)
+bac_jac_df_long_sf <- subset(bac_jac_df_long, Estuary3.x == "SF")
+bac_jac_df_long_wa <- subset(bac_jac_df_long, Estuary3.x == "Waccamaw")
+bac_jac_df_long_def <- subset(bac_jac_df_long, Estuary3.x == "DE Field")
+bac_jac_df_long_del <- subset(bac_jac_df_long, Estuary3.x == "DE Lab")
+bac_jac_df_long_al <- subset(bac_jac_df_long, Estuary3.x == "Alligator")
+table(bac_jac_df_long_sf$comparison)
+table(bac_jac_df_long_wa$comparison)
+table(bac_jac_df_long_def$comparison)
+table(bac_jac_df_long_del$comparison)
+table(bac_jac_df_long_al$comparison)
+t.test(value ~ comparison, data = bac_jac_df_long_sf) # Sig
+t.test(value ~ comparison, data = bac_jac_df_long_wa) # Sig
+t.test(value ~ comparison, data = bac_jac_df_long_def) # NSD
+t.test(value ~ comparison, data = bac_jac_df_long_del) # NSD
+t.test(value ~ comparison, data = bac_jac_df_long_al) # Sig
+cohensD(value ~ comparison, data = bac_jac_df_long_sf) # 1.31
+cohensD(value ~ comparison, data = bac_jac_df_long_wa) # 1.13
+cohensD(value ~ comparison, data = bac_jac_df_long_def) # 0.25
+cohensD(value ~ comparison, data = bac_jac_df_long_del) # 0.04
+cohensD(value ~ comparison, data = bac_jac_df_long_al) # 1.15
+bac_jac_df_long_multi <- rbind(bac_jac_df_long_sf,
+                                bac_jac_df_long_wa,
+                                bac_jac_df_long_def,
+                                bac_jac_df_long_del,
+                                bac_jac_df_long_al)
+
+# Graph
+bac_bray_df_long_multi$Dissim <- "Bray-Curtis"
+bac_jac_df_long_multi$Dissim <- "Jaccard"
+comb <- rbind(bac_bray_df_long_multi, bac_jac_df_long_multi) %>%
+  mutate(Exp.x = factor(Exp.x, levels = c("Obs", "Field", "Lab")),
+         Estuary2.x = factor(Estuary2.x, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
+label.df <- data.frame(Dissim = c("Bray-Curtis", "Bray-Curtis", 
+                                  "Bray-Curtis", "Bray-Curtis", 
+                                  "Bray-Curtis", "Bray-Curtis",
+                                  "Bray-Curtis", "Bray-Curtis",
+                                  "Bray-Curtis", "Bray-Curtis",
+                                  "Jaccard", "Jaccard", 
+                                  "Jaccard", "Jaccard", 
+                                  "Jaccard", "Jaccard",
+                                  "Jaccard", "Jaccard",
+                                  "Jaccard", "Jaccard"),
+                       Exp.x = c("Obs", "Obs", "Field", "Field", "Field", "Field",
+                               "Lab", "Lab", "Lab", "Lab",
+                               "Obs", "Obs", "Field", "Field", "Field", "Field",
+                               "Lab", "Lab", "Lab", "Lab"),
+                       Estuary2.x = c("SF", "SF",
+                                    "Waccamaw", "Waccamaw",
+                                    "Delaware", "Delaware",
+                                    "Delaware", "Delaware",
+                                    "Alligator", "Alligator",
+                                    "SF", "SF",
+                                    "Waccamaw", "Waccamaw",
+                                    "Delaware", "Delaware",
+                                    "Delaware", "Delaware",
+                                    "Alligator", "Alligator"),
+                       comparison = c("between","within","between","within",
+                                      "between","within","between","within",
+                                      "between","within","between","within",
+                                      "between","within","between","within",
+                                      "between","within","between","within"),
+                       Value = c(1.05,1.05,1.05,1.05,1.05,1.05,1.05,1.05,1.05,1.05,
+                                 1.05,1.05,1.05,1.05,1.05,1.05,1.05,1.05,1.05,1.05),
+                       Sig = c("a","b","a","b","","","","","a","b",
+                               "a","b","a","b","","","","","a","b")) %>%
+  mutate(Exp.x = factor(Exp.x, levels = c("Obs", "Field", "Lab")),
+         Estuary2.x = factor(Estuary2.x, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
+label.df2 <- data.frame(Dissim = c("Bray-Curtis", "Bray-Curtis", 
+                                   "Bray-Curtis", "Bray-Curtis", 
+                                   "Bray-Curtis", "Jaccard",
+                                   "Jaccard", "Jaccard",
+                                   "Jaccard", "Jaccard"),
+                       Exp.x = c("Obs", "Field", "Field", "Lab", "Lab", 
+                                 "Obs", "Field", "Field", "Lab", "Lab"),
+                       Estuary2.x = c("SF",
+                                      "Waccamaw",
+                                      "Delaware",
+                                      "Delaware",
+                                      "Alligator",
+                                      "SF",
+                                      "Waccamaw",
+                                      "Delaware",
+                                      "Delaware",
+                                      "Alligator"),
+                       x = c(1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5),
+                       Value = c(0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1),
+                       es = c("d = 1.23","d = 0.97","d = 0.14","d = 0.03","d = 1.02",
+                              "d = 1.31","d = 1.13","d = 0.25","d = 0.04","d = 1.23")) %>%
+  mutate(Exp.x = factor(Exp.x, levels = c("Obs", "Field", "Lab")),
+         Estuary2.x = factor(Estuary2.x, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
+#png("FinalFigs/Figure8.png", width = 8, height = 5, units = "in", res = 300)
+ggplot(data = comb, aes(comparison, value)) +
+  geom_jitter(data = subset(comb, Estuary2.x == "SF"),
+              size = 1, alpha = 0.2) +
+  geom_jitter(data = subset(comb, Estuary2.x == "Waccamaw"),
+              size = 1, alpha = 0.3) +
+  geom_jitter(data = subset(comb, Estuary2.x == "Delaware"), 
+              size = 1, alpha = 0.5) +
+  geom_jitter(data = subset(comb, Estuary2.x == "Alligator"), 
+              size = 1, alpha = 0.4) +
+  geom_boxplot(outlier.shape = NA, color = "blue", fill = NA) +
+  geom_text(data = label.df, aes(x = comparison, y = Value, label = Sig, group=NULL), size = 4) +
+  geom_text(data = label.df2, aes(x = x, y = Value, label = es, group=NULL), size = 3.5) +
+  labs(x = "Salinity Comparison",
+       y = "Dissimilarity") +
+  facet_nested(Dissim ~ Exp.x + Estuary2.x, scales = "free_y") +
+  ylim(0,1.05) +
+  theme_bw() +
+  theme(axis.title = element_text(face="bold", size = 14),
+        axis.text = element_text(size = 12),
+        plot.margin = unit(c(0.1,0.1,0.1,0.1),"cm"),
+        strip.text = element_text(size = 11))
+#dev.off()
+
+
+
+#### _NTI ####
+# The NTI values between −2 and 2 indicate stochastic community assembly, whereas NTI values less than −2 or higher than 2 indicate that deterministic processes play a more important role in structuring the community (deterministic environmental filtering)
+
+# Align seqs with MUSCLE and Make tree with QIIME
+# Remove rare taxa or tree is too big
+frol_abund <- filter_taxa_from_input(frol, filter_thresh = 0.5)
+bac_asv <- as.data.frame(t(frol_abund$data_loaded))
+tree <- read.tree("rep_phylo.tre")
+colnames(bac_asv)
+tree$tip.label
+tree <- prune.sample(bac_asv, tree)
+bac_asv <- bac_asv[,tree$tip.label]
+phy.dist <- cophenetic(tree)
+NTI <- NTI.p(bac_asv, 
+             phy.dist, 
+             nworker = 4, 
+             memo.size.GB = 50,
+             weighted = TRUE, 
+             rand = 1000,
+             check.name = TRUE, 
+             output.MNTD = FALSE,
+             sig.index = "NTI",
+             silent = FALSE)
+saveRDS(NTI, "NTI.rds")
+
+# But, what we really should do is NTI for each experiment.
+# (Do this part on server for speed)
+sf_asv <- as.data.frame(t(sf$data_loaded))
+sf_tree <- read.tree("rep_phylo.tre")
+sf_tree <- prune.sample(sf_asv, tree)
+sf_asv <- sf_asv[,sf_tree$tip.label]
+sf_phy.dist <- cophenetic(sf_tree)
+sf_NTI <- NTI.p(sf_asv, 
+             sf_phy.dist, 
+             nworker = 4, 
+             memo.size.GB = 50,
+             weighted = TRUE, 
+             rand = 1000,
+             check.name = TRUE, 
+             output.MNTD = FALSE,
+             sig.index = "NTI",
+             silent = FALSE)
+
+sc_asv <- as.data.frame(t(sc$data_loaded))
+sc_tree <- read.tree("rep_phylo.tre")
+sc_tree <- prune.sample(sc_asv, tree)
+sc_asv <- sc_asv[,sc_tree$tip.label]
+sc_phy.dist <- cophenetic(sc_tree)
+sc_NTI <- NTI.p(sc_asv, 
+                sc_phy.dist, 
+                nworker = 4, 
+                memo.size.GB = 50,
+                weighted = TRUE, 
+                rand = 1000,
+                check.name = TRUE, 
+                output.MNTD = FALSE,
+                sig.index = "NTI",
+                silent = FALSE)
+
+detra_asv <- as.data.frame(t(detra$data_loaded))
+detra_tree <- read.tree("rep_phylo.tre")
+detra_tree <- prune.sample(detra_asv, tree)
+detra_asv <- detra_asv[,detra_tree$tip.label]
+detra_phy.dist <- cophenetic(detra_tree)
+detra_NTI <- NTI.p(detra_asv, 
+                detra_phy.dist, 
+                nworker = 4, 
+                memo.size.GB = 50,
+                weighted = TRUE, 
+                rand = 1000,
+                check.name = TRUE, 
+                output.MNTD = FALSE,
+                sig.index = "NTI",
+                silent = FALSE)
+
+deinc_asv <- as.data.frame(t(deinc$data_loaded))
+deinc_tree <- read.tree("rep_phylo.tre")
+deinc_tree <- prune.sample(deinc_asv, tree)
+deinc_asv <- deinc_asv[,deinc_tree$tip.label]
+deinc_phy.dist <- cophenetic(deinc_tree)
+deinc_NTI <- NTI.p(deinc_asv, 
+                deinc_phy.dist, 
+                nworker = 4, 
+                memo.size.GB = 50,
+                weighted = TRUE, 
+                rand = 1000,
+                check.name = TRUE, 
+                output.MNTD = FALSE,
+                sig.index = "NTI",
+                silent = FALSE)
+
+nc_asv <- as.data.frame(t(nc$data_loaded))
+nc_tree <- read.tree("rep_phylo.tre")
+nc_tree <- prune.sample(nc_asv, tree)
+nc_asv <- nc_asv[,nc_tree$tip.label]
+nc_phy.dist <- cophenetic(nc_tree)
+nc_NTI <- NTI.p(nc_asv, 
+                nc_phy.dist, 
+                nworker = 4, 
+                memo.size.GB = 50,
+                weighted = TRUE, 
+                rand = 1000,
+                check.name = TRUE, 
+                output.MNTD = FALSE,
+                sig.index = "NTI",
+                silent = FALSE)
+
+NTI <- readRDS("NTI_concat.rds") %>%
+  mutate(sampleID = rownames(.))
+
+# Merge, test, and plot
+frol$map_loaded <- frol$map_loaded %>%
+  left_join(., NTI, by = "sampleID")
+
+m2 <- aov(NTI ~ Estuary + Salt + Depth, data = frol$map_loaded)
+summary(m2)
+Anova(m2, type = "II")
+
+m2 <- aov(NTI ~ EstSalt, data = frol$map_loaded)
+shapiro.test(m2$residuals) # Normal
+summary(m2)
+t2 <- emmeans(object = m2, specs = "EstSalt") %>%
+  cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
+  mutate(name = "rich",
+         y = max(frol$map_loaded$NTI)+(max(frol$map_loaded$NTI)-min(frol$map_loaded$NTI))/20)
+
+t.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "SF")) # Sig.
+wilcox.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "SF")) # Sig.
+
+t.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "Waccamaw")) # Sig.
+wilcox.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "Waccamaw")) # Sig.
+
+t.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "DE Field")) # NSD
+wilcox.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "DE Field")) # NSD
+
+t.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "DE Lab")) # NSD
+wilcox.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "DE Lab")) # NSD
+
+t.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "Alligator")) # Sig.
+wilcox.test(NTI ~ Salt, data = subset(frol$map_loaded, Estuary3 == "Alligator")) # Marg.
+
+label_df3 <- data.frame("Exp" = c("Obs", "Obs",
+                                  "Field", "Field",
+                                  "Field", "Field",
+                                  "Lab", "Lab", 
+                                  "Lab", "Lab"),
+                        "Estuary2" = c("SF", "SF",
+                                       "Waccamaw", "Waccamaw",
+                                       "Delaware", "Delaware",
+                                       "Delaware", "Delaware",
+                                       "Alligator", "Alligator"),
+                        "y" = c(10.1, 10.1, 10.1, 10.1, 10.1, 10.1, 10.1, 10.1, 10.1, 10.1),
+                        "x" = c("Freshwater", "Oligohaline", "Freshwater", "Oligohaline",
+                                "Freshwater", "Oligohaline", "Freshwater", "Oligohaline",
+                                "Freshwater", "Oligohaline"),
+                        "label" = c("a", "b", "a", "b", "", "", "", "", "a", "b")) %>%
+  mutate(Exp = factor(Exp, levels = c("Obs", "Field", "Lab"))) %>%
+  mutate(Estuary2 = factor(Estuary2, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
+
+#png("FinalFigs/FigureS3.png", width = 8, height = 4, units = "in", res = 300)
+ggplot(frol$map_loaded, aes(Salt, NTI)) +
+  geom_hline(yintercept = 2, linetype = "dashed") +
+  geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
+  geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
+              aes(fill = Depth, shape = Estuary2, colour = Salt)) +
+  geom_text(data = label_df3, aes(x, y, label = label), 
+            size = 4, color = "black", inherit.aes = F) +
+  labs(y = "NTI",
+       colour = "Salinity",
+       shape = "Site",
+       fill = "Depth (cm)") +
+  scale_colour_manual(values = c("blue", "red")) +
+  scale_shape_manual(breaks = c( "SF", "Waccamaw", "Delaware", "Alligator"), 
+                     values = c(24, 21, 23, 22)) +
+  scale_fill_manual(values = c("black", "white")) +
+  guides(shape = guide_legend(order = 1,),
+         colour = guide_legend(order = 2),
+         fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
+  facet_nested_wrap(~ Exp + Estuary2, nrow = 1) +
+  theme_bw() +
+  theme(legend.position = "right",
+        legend.spacing.y = unit(0.1, "cm"),
+        legend.margin = margin(0.25, 0, 0, -0.1, unit = "cm"),
+        legend.key.size = unit(0.4, "cm"),
+        axis.title.y = element_text(size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        strip.text = element_text(size = 10))
+#dev.off()
+
+
+
+#### 5. Map ####
+# Need map as Figure S1
+# Just basic US map with points on the 4 sites
+coords <- data.frame(Estuary2 = c("SF", "Waccamaw", "Delaware", "Alligator"),
+                     Longitude = c(-121.624, -79.0919, -75.17314722, -76.1569),
+                     Latitude = c(38.001, 33.5250, 39.85918056, 35.9061)) %>%
+  mutate(Estuary2 = factor(Estuary2,
+                           levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
+test_data <- data.frame(lon = coords$Longitude, lat = coords$Latitude)
+transformed_data <- usmap_transform(test_data)
+coords$x <- transformed_data$x
+coords$y <- transformed_data$y
+
+#png("FinalFigs/FigureS1.png", width = 6, height = 4, units = "in", res = 300)
+plot_usmap(exclude = c("AK", "HI"),
+           color = "white",
+           fill = "grey80",
+           size = 0.3) +
+  geom_point(data = coords, 
+             aes(x = x, y = y, shape = Estuary2),
+             fill = "red",
+             color = "red",
+             size = 4) +
+  geom_text(data = coords,
+            aes(x = x, y = y + 130000, label = Estuary2),
+            size = 4) +
+  scale_shape_manual(breaks = c( "SF", "Waccamaw", "Delaware", "Alligator"), 
+                     values = c(24, 21, 23, 22)) +
+  theme(legend.position = "none")
+#dev.off()
