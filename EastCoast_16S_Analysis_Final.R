@@ -1307,6 +1307,22 @@ brewer.pal(12, "Paired")
 
 
 
+#### __AO:NOB and MG:MT ####
+frol_guilds <- summarize_taxonomy(input = frol, level = 9, report_higher_tax = F) %>%
+  t() %>%
+  as.data.frame() %>%
+  mutate(sampleID = rownames()) %>%
+  mutate(AO_NOB = (AOA + AOB) / NOB) %>%
+  mutate()
+frol$map_loaded$sampleID <- rownames(frol$map_loaded)
+
+### __Methanotrophs ####
+frol_mt <- filter_taxa_from_input(frol,
+                                  taxa_to_keep = c("MOB_I", "MOB_II", "MOB_IIa"),
+                                  at_spec_level = 9)
+nrow(frol_mt$taxonomy_loaded)
+
+
 #### _Indicators ####
 # MULTIPATT (list ASVs associated with each group)
 set.seed(1202)
@@ -1652,8 +1668,167 @@ pheatmap(CH4_res_mat,
          annotation_colors = ann_colors,
          cluster_rows = F,
          cluster_cols = F,
-         gaps_row = c(14, 15, 26, 36),
+         gaps_row = c(15, 26, 36),
          filename = "FinalFigs/Figure6.png",
+         width = 5,
+         height = 7)
+dev.off()
+dev.set(dev.next())
+dev.set(dev.next())
+show_col(brewer_pal(palette = "Paired")(12))
+brewer_pal(palette = "Paired")(12)
+
+
+#### _Sal ####
+# Correlations between CH4 and BGC and Guilds by each site
+# Use the custom functions written to do this
+
+# Get all corrs
+sf_cor <- multiple_correlations(env_nona = env_nona_sf, var = "Salinity_ppt_all") %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+sf_corG <- meth_corr_by_taxonomy(input = sf, level = 9, threshold = 0, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+sf_corP <- meth_corr_by_taxonomy(input = sf, level = 2, threshold = 0.5, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+sf_res <- rbind(sf_cor, sf_corG, sf_corP) %>%
+  rename(SF_rho = rho,
+         SF_sig = SpearmanPcut)
+sf_res$Variable <- replace(sf_res$Variable, sf_res$Variable == "sed_pH" , "pH")
+
+# Note, DE is just field, because no lab methane data yet
+detra_cor <- multiple_correlations(env_nona = env_nona_detra, var = "Salinity_ppt_all") %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+detra_corG <- meth_corr_by_taxonomy(input = detra, level = 9, threshold = 0, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+detra_corP <- meth_corr_by_taxonomy(input = detra, level = 2, threshold = 0.5, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+de_res <- rbind(detra_cor, detra_corG, detra_corP) %>%
+  rename(DE_rho = rho,
+         DE_sig = SpearmanPcut)
+
+nc_cor <- multiple_correlations(env_nona = env_nona_nc, var = "Salinity_ppt_all") %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+nc_corG <- meth_corr_by_taxonomy(input = nc, level = 9, threshold = 0, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+nc_corP <- meth_corr_by_taxonomy(input = nc, level = 2, threshold = 0.5, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+nc_res <- rbind(nc_cor, nc_corG, nc_corP) %>%
+  rename(AL_rho = rho,
+         AL_sig = SpearmanPcut)
+
+sc_cor <- multiple_correlations(env_nona = env_nona_sc, var = "Salinity_ppt_all") %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+sc_corG <- meth_corr_by_taxonomy(input = sc, level = 9, threshold = 0, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+sc_corP <- meth_corr_by_taxonomy(input = sc, level = 2, threshold = 0.5, data = "Yes") %>%
+  rename(Variable = Taxon) %>%
+  dplyr::select(Variable, rho, SpearmanPcut)
+sc_res <- rbind(sc_cor, sc_corG, sc_corP) %>%
+  rename(WA_rho = rho,
+         WA_sig = SpearmanPcut)
+
+# Make df
+# Prep. data frame
+Sal_res <- data.frame("Variable" = c("CH4_ug_m2_h", "CO2_ug_m2_h", "sed_per_org", "DOC_mgL", 
+                                     "TOC_mgL", "sed_per_C", "sed_CN", 
+                                     "sed_per_N", "DON_mgL", "DIN_mgL", "TN_mgL", 
+                                     "NH4_mgL", "sed_NH4_mgL", "PO4_mgL", "sed_PO4_mgL",
+                                     "pH", "NO3_mgL", "sed_NO3_mgL", 
+                                     "N2O_ug_m2_h", "SRP_umol_m2_h", "SO4_mgL", 
+                                     "sed_SO4_mgL", "Fe_mgL", "sed_Fe_mgL", "Mn_mgL", 
+                                     "sed_Mn_mgL", "CH4_H2", "CH4_ac", "CH4_me", 
+                                     "CH4_mix", "ANAMX", "AOA", "AOB", "NOB", "SRB_syn", 
+                                     "Firmicutes", "ANME", "MOB_I", "MOB_II", "MOB_IIa", 
+                                     "SRB", "FeRB"),
+                      "Shortname" = c("CH4 Flux", "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
+                                      "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
+                                      "PO4_s", "pH", "NO3", "NO3_s", 
+                                      "N2O Flux", "SR", "SO4", "SO4_s", "Fe", "Fe_s", 
+                                      "Mn", "Mn_s", "CH4_H2", "CH4_ac", "CH4_me",
+                                      "CH4_mix", "ANAMX", "AOA", "AOB", "NOB",
+                                      "SRB_syn", "Firmicutes", "ANME", "MOB_I",
+                                      "MOB_II", "MOB_IIa", "SRB", "FeRB"),
+                      "Type" = c("Flux", "Flux", "Sediment", "Porewater", "Porewater", 
+                                 "Sediment", "Sediment", "Sediment", "Porewater", 
+                                 "Porewater", "Porewater", "Porewater", "Sediment", 
+                                 "Porewater", "Sediment", "Porewater", 
+                                 "Porewater", "Sediment", "Flux", "Porewater", 
+                                 "Porewater", "Sediment", "Porewater", "Sediment", 
+                                 "Porewater", "Sediment", "Sediment", "Sediment", 
+                                 "Sediment", "Sediment", "Sediment", "Sediment", 
+                                 "Sediment", "Sediment", "Sediment", "Sediment", 
+                                 "Sediment", "Sediment", "Sediment", "Sediment", 
+                                 "Sediment", "Sediment"),
+                      "Prediction" = c("Negative", "Positive", "Positive", "Positive", "Positive", 
+                                       "Positive", "Negative", "Positive", "Positive", 
+                                       "Positive", "Positive", "Positive", "Positive", 
+                                       "Positive", "Positive", "Positive", 
+                                       "Negative", "Negative", "Negative", "Negative", 
+                                       "Negative", "Negative", "Negative", "Negative", 
+                                       "Negative", "Negative", "Positive", "Positive", 
+                                       "Positive", "Positive", "Positive", "Positive", 
+                                       "Positive", "Positive", "Positive", "Positive", 
+                                       "Negative", "Negative", "Negative", "Negative", 
+                                       "Negative", "Negative")) %>%
+  left_join(., sf_res, by = "Variable") %>%
+  left_join(., de_res, by = "Variable") %>%
+  left_join(., nc_res, by = "Variable") %>%
+  left_join(., sc_res, by = "Variable")
+
+# Pretty heatmap
+Sal_res_meta <- Sal_res %>%
+  dplyr::select(Shortname, Type, Prediction, SF_sig, WA_sig, DE_sig, AL_sig) %>%
+  mutate_if(is.character, as.factor)
+Sal_res_mat <- Sal_res %>%
+  column_to_rownames(var = "Shortname") %>%
+  dplyr::select(SF_rho, WA_rho, DE_rho, AL_rho) %>%
+  as.matrix()
+ann_rows <- data.frame(row.names = rownames(Sal_res_mat), 
+                       "AL_sig" = Sal_res_meta$`AL_sig`,
+                       "DE_sig" = Sal_res_meta$`DE_sig`,
+                       "WA_sig" = Sal_res_meta$`WA_sig`,
+                       "SF_sig" = CH4_res_meta$`SF_sig`,
+                       Prediction = Sal_res_meta$Prediction,
+                       Type = Sal_res_meta$Type)
+ann_colors <- list(Type = c(Flux = "#FFFF99", 
+                            Porewater = "#A6CEE3", 
+                            Sediment = "#B15928"),
+                   Prediction = c(Positive = "red", 
+                                  Negative = "blue"),
+                   "SF_sig" = c(`Pfdr < 0.05` = "black", 
+                                `Pfdr > 0.05` = "white"),
+                   "DE_sig" = c(`Pfdr < 0.05` = "black", 
+                                `Pfdr > 0.05` = "white"),
+                   "AL_sig" = c(`Pfdr < 0.05` = "black", 
+                                `Pfdr > 0.05` = "white"),
+                   "WA_sig" = c(`Pfdr < 0.05` = "black", 
+                                `Pfdr > 0.05` = "white"))
+pheatmap(Sal_res_mat,
+         legend = T,
+         legend_breaks = c(-0.5, 0, 0.5, max(na.omit(Sal_res_mat))),
+         legend_labels = c("-0.5", "0", "0.5", "rho\n"),
+         main = "",
+         #color = bluered(100),
+         #border_color = NA,
+         #na_col = "gray",
+         scale = "none",
+         angle_col = 315,
+         fontsize = 6,
+         fontsize_row = 9,
+         fontsize_col = 9,
+         annotation_row = ann_rows,
+         annotation_colors = ann_colors,
+         cluster_rows = F,
+         cluster_cols = F,
+         gaps_row = c(16, 26, 36),
+         filename = "FinalFigs/FigureS2.png",
          width = 5,
          height = 7)
 dev.off()
@@ -1850,7 +2025,7 @@ plot_venn_diagram2(detra, "Salt", 0.000000000000000000000000000001)
 plot_venn_diagram2_mirror(deinc, "Salt", 0.000000000000000000000000000001)
 plot_venn_diagram2(nc, "Salt", 0.000000000000000000000000000001)
 
-png("FinalFigs/FigureS2.png", width = 9, height = 6, units = "in", res = 300)
+png("FinalFigs/FigureS3.png", width = 9, height = 6, units = "in", res = 300)
 plot_grid(plot_venn_diagram2_mirror(sf, "Salt", 0.000000000000000000000000000001),
           plot_venn_diagram2(sc, "Salt", 0.000000000000000000000000000001),
           plot_venn_diagram2(detra, "Salt", 0.000000000000000000000000000001),
@@ -2023,7 +2198,7 @@ label.df2 <- data.frame(Dissim = c("Bray-Curtis", "Bray-Curtis",
                               "d = 1.31","d = 1.13","d = 0.25","d = 0.04","d = 1.23")) %>%
   mutate(Exp.x = factor(Exp.x, levels = c("Obs", "Field", "Lab")),
          Estuary2.x = factor(Estuary2.x, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
-#png("FinalFigs/Figure8.png", width = 8, height = 5, units = "in", res = 300)
+#png("FinalFigs/FigureS4.png", width = 8, height = 5, units = "in", res = 300)
 ggplot(data = comb, aes(comparison, value)) +
   geom_jitter(data = subset(comb, Estuary2.x == "SF"),
               size = 1, alpha = 0.2) +
@@ -2208,7 +2383,7 @@ label_df3 <- data.frame("Exp" = c("Obs", "Obs",
   mutate(Exp = factor(Exp, levels = c("Obs", "Field", "Lab"))) %>%
   mutate(Estuary2 = factor(Estuary2, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
 
-#png("FinalFigs/FigureS3.png", width = 8, height = 4, units = "in", res = 300)
+#png("FinalFigs/FigureS5.png", width = 8, height = 4, units = "in", res = 300)
 ggplot(frol$map_loaded, aes(Salt, NTI)) +
   geom_hline(yintercept = 2, linetype = "dashed") +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
