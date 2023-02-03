@@ -399,6 +399,18 @@ table(frol$map_loaded$Estuary3)
 frol$map_loaded$Estuary3 <- factor(frol$map_loaded$Estuary3,
                                    levels = c("SF", "Waccamaw", "DE Field", "DE Lab", "Alligator"))
 frol$map_loaded$Est3Salt <- paste(frol$map_loaded$Estuary3, frol$map_loaded$Salt, sep = "_")
+frol$map_loaded$Est3Salt <- factor(frol$map_loaded$Est3Salt,
+                                   levels = c("Alligator_Freshwater",
+                                              "Alligator_Oligohaline",
+                                              "DE Lab_Freshwater",
+                                              "DE Lab_Oligohaline",
+                                              "DE Field_Freshwater",
+                                              "DE Field_Oligohaline",
+                                              "SF_Freshwater",
+                                              "SF_Oligohaline",
+                                              "Waccamaw_Freshwater",
+                                              "Waccamaw_Oligohaline"))
+levels(frol$map_loaded$Est3Salt)
 
 # Subsets
 sf <- filter_data(frol,
@@ -429,10 +441,10 @@ leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Depth) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = frol$map_loaded)
 shapiro.test(m$residuals) # Not normally distributed
 Anova(m, type = "II") # All sig.
-m <- aov(rich ~ EstSalt, data = frol$map_loaded)
+m <- aov(rich ~ Est3Salt, data = frol$map_loaded)
 shapiro.test(m$residuals) # Normal
 summary(m)
-t <- emmeans(object = m, specs = "EstSalt") %>%
+t <- emmeans(object = m, specs = "Est3Salt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "rich",
          y = max(frol$map_loaded$rich)+(max(frol$map_loaded$rich)-min(frol$map_loaded$rich))/20)
@@ -450,10 +462,10 @@ leveneTest(frol$map_loaded$shannon ~ frol$map_loaded$Depth) # Homogeneous
 m1 <- aov(shannon ~ Estuary + Salt + Depth, data = frol$map_loaded)
 shapiro.test(m1$residuals) # Not normally distributed but using anyway
 Anova(m1, type = "II") # All sig
-m1 <- aov(shannon ~ EstSalt, data = frol$map_loaded)
+m1 <- aov(shannon ~ Est3Salt, data = frol$map_loaded)
 shapiro.test(m1$residuals) # Not normal
 summary(m1)
-t1 <- emmeans(object = m1, specs = "EstSalt") %>%
+t1 <- emmeans(object = m1, specs = "Est3Salt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "shannon",
          y = max(frol$map_loaded$shannon)+(max(frol$map_loaded$shannon)-min(frol$map_loaded$shannon))/20)
@@ -471,12 +483,12 @@ facet_df <- c("rich" = "(a) Richness",
               "shannon" = "(b) Shannon")
 alpha_long <- frol$map_loaded %>%
   pivot_longer(cols = c("rich", "shannon"))
-#png("FinalFigs/Figure1.png", width = 7, height = 4.5, units = "in", res = 300)
-ggplot(alpha_long, aes(EstSalt, value)) +
+png("FinalFigs/Figure1.png", width = 7, height = 4.5, units = "in", res = 300)
+ggplot(alpha_long, aes(Est3Salt, value)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
   geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
               aes(fill = Depth, shape = Estuary, colour = Salt)) +
-  geom_text(data = label_df, aes(EstSalt, y, label = str_trim(.group)), 
+  geom_text(data = label_df, aes(Est3Salt, y, label = str_trim(.group)), 
             size = 4, color = "black") +
   labs(x = "Site",
        colour = "Salinity",
@@ -484,7 +496,8 @@ ggplot(alpha_long, aes(EstSalt, value)) +
        shape = "Site") +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
-  scale_shape_manual(values = c(21, 22, 23, 24)) +
+  scale_shape_manual(breaks = c( "SF", "Waccamaw", "Delaware", "Alligator"), 
+                     values = c(24, 21, 23, 22)) +
   guides(shape = guide_legend(order = 1,),
          colour = guide_legend(order = 2),
          fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
@@ -498,61 +511,8 @@ ggplot(alpha_long, aes(EstSalt, value)) +
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
         strip.text = element_text(size = 10),
-        plot.margin = margin(5, 5, 5, 25, "pt"))
-#dev.off()
-
-# Clean nested facet version
-m <- aov(rich ~ ExpEstSalt, data = frol$map_loaded)
-t <- emmeans(object = m, specs = "ExpEstSalt") %>%
-  cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
-  mutate(name = "rich",
-         y = max(frol$map_loaded$rich)+(max(frol$map_loaded$rich)-min(frol$map_loaded$rich))/20)
-m1 <- aov(shannon ~ ExpEstSalt, data = frol$map_loaded)
-t1 <- emmeans(object = m1, specs = "ExpEstSalt") %>%
-  cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
-  mutate(name = "shannon",
-         y = max(frol$map_loaded$shannon)+(max(frol$map_loaded$shannon)-min(frol$map_loaded$shannon))/20)
-label_df <- rbind(t, t1)
-
-facet_names <- c("rich" = "(a) Richness",
-                 "shannon" = "(b) Shannon",
-                 "Lab" = "Lab",
-                 "Field" = "Field",
-                 "Obs" = "Obs",
-                 "Waccamaw" = "WA",
-                 "Alligator" = "AL",
-                 "Delaware" = "DE",
-                 "SF" = "SF",
-                 "Freshwater" = "Fresh",
-                 "Oligohaline" = "Oligo")
-#png("FinalFigs/Figure1.png", width = 7, height = 4.5, units = "in", res = 300)
-ggplot(alpha_long, aes(ExpEstSalt, value)) +
-  geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
-  geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
-              aes(fill = Depth, shape = Estuary, colour = Salt)) +
-  geom_text(data = label_df, aes(ExpEstSalt, y, label = str_trim(.group)), 
-            size = 4, color = "black") +
-  labs(x = "Site",
-       colour = "Salinity",
-       fill = "Depth (cm)",
-       shape = "Site") +
-  scale_colour_manual(values = c("blue", "red")) +
-  scale_fill_manual(values = c("black", "white")) +
-  scale_shape_manual(values = c(21, 22, 23, 24)) +
-  guides(shape = guide_legend(order = 1,),
-         colour = guide_legend(order = 2),
-         fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
-  facet_wrap(~ name, ncol = 2, scales = "free_y", labeller = as_labeller(facet_df)) +
-  theme_bw() +
-  theme(legend.position = "right",
-        legend.spacing.y = unit(0.1, "cm"),
-        legend.margin = margin(0.25, 0, 0, -0.1, unit = "cm"),
-        legend.key.size = unit(0.4, "cm"),
-        axis.title = element_blank(),
-        axis.text.y = element_text(size = 10),
-        axis.text.x = element_text(size = 8, angle = 90, hjust = 1, vjust = 0.5),
-        strip.text = element_text(size = 10))
-#dev.off()
+        plot.margin = margin(5, 5, 5, 30, "pt"))
+dev.off()
 
 
 
@@ -1311,16 +1271,247 @@ brewer.pal(12, "Paired")
 frol_guilds <- summarize_taxonomy(input = frol, level = 9, report_higher_tax = F) %>%
   t() %>%
   as.data.frame() %>%
-  mutate(sampleID = rownames()) %>%
+  mutate(sampleID = rownames(.)) %>%
   mutate(AO_NOB = (AOA + AOB) / NOB) %>%
-  mutate()
-frol$map_loaded$sampleID <- rownames(frol$map_loaded)
+  mutate(MG = CH4_ac + CH4_H2 + CH4_me + CH4_mix) %>%
+  mutate(MT = MOB_I + MOB_II + MOB_IIa + ANME) %>%
+  mutate(MG_MT = (CH4_ac + CH4_H2 + CH4_me + CH4_mix)/(ANME + MOB_I + MOB_II + MOB_IIa)) %>%
+  left_join(., frol$map_loaded, by = "sampleID")
+
+# Check sig., make sig. solid and not sig. dotted
+summary(lm(log(MG_MT) ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "SF")))
+summary(lm(log(MG_MT) ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "Waccamaw")))
+summary(lm(log(MG_MT) ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "DE Field")))
+summary(lm(log(MG_MT) ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "DE Lab")))
+summary(lm(log(MG_MT) ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "Alligator")))
+
+a <- ggplot(frol_guilds, aes(AO_NOB, MG_MT, colour = Estuary3, shape = Estuary3)) +
+  geom_point(size = 2) +
+  geom_smooth(data = subset(frol_guilds, Estuary3 == "SF" | Estuary3 == "Waccamaw"),
+              method = "lm", size = 0.25, alpha = 0.1) +
+  geom_smooth(data = subset(frol_guilds, Estuary3 == "DE Field" | 
+                              Estuary3 == "DE Lab" | Estuary3 == "Alligator"),
+              method = "lm", size = 0.5, alpha = 0.1, linetype = "dotted", se = F) +
+  labs(x = "Ammonia oxidizers: Nitrite oxidizing bacteria",
+       y = "Methanogens: Methanotrophs",
+       colour = "Site/Experiment",
+       shape = "Site/Experiment") +
+  scale_shape_manual(values = c(17, 16, 18, 18, 15)) +
+  scale_x_continuous(trans = 'log10') +
+  scale_y_continuous(trans = 'log10',
+                     breaks = c(0.01, 0.1, 1, 10, 100),
+                     labels = c(0.01, 0.1, 1, 10, 100)) +
+  guides(colour = guide_legend(shape = c(17, 16, 18, 18, 15))) +
+  theme_bw()
+# This is the opposite of what we should see!
+l <- get_legend(a)
+a <- a + theme(legend.position = "none",
+               axis.title = element_text(size = 10))
+
+# Check sig., make sig. solid and not sig. dotted
+summary(lm(MT ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "SF")))
+summary(lm(MT ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "Waccamaw")))
+summary(lm(MT ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "DE Field")))
+summary(lm(MT ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "DE Lab")))
+summary(lm(MT ~ log(AO_NOB), data = subset(frol_guilds, Estuary3 == "Alligator")))
+
+b <- ggplot(frol_guilds, aes(AO_NOB, MT*100, colour = Estuary3, shape = Estuary3)) +
+  geom_point(size = 2) +
+  geom_smooth(data = subset(frol_guilds, Estuary3 == "SF"),
+              method = "lm", size = 0.25, alpha = 0.1) +
+  geom_smooth(data = subset(frol_guilds, Estuary3 == "DE Field" | 
+                              Estuary3 == "DE Lab" | Estuary3 == "Alligator" 
+                            | Estuary3 == "Waccamaw"),
+              method = "lm", size = 0.5, alpha = 0.1, linetype = "dotted", se = F) +
+  labs(x = "Ammonia oxidizers: Nitrite oxidizing bacteria",
+       y = "Methanotroph % abundance",
+       colour = "Site/Experiment",
+       shape = "Site/Experiment") +
+  scale_shape_manual(values = c(17, 16, 18, 18, 15)) +
+  scale_x_continuous(trans = 'log10') +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title = element_text(size = 10))
+# Variable!
+
+png("FinalFigs/FigureS2.png", width = 8, height = 4, units = "in", res = 300)
+plot_grid(a, b, l, ncol = 3, rel_widths = c(0.43, 0.43, 0.14), labels = c("a", "b", ""))
+dev.off()
+
+
 
 ### __Methanotrophs ####
 frol_mt <- filter_taxa_from_input(frol,
-                                  taxa_to_keep = c("MOB_I", "MOB_II", "MOB_IIa"),
+                                  taxa_to_keep = c("ANME", "MOB_I", "MOB_II", "MOB_IIa"),
                                   at_spec_level = 9)
-nrow(frol_mt$taxonomy_loaded)
+tax_sum_mt <- summarize_taxonomy(input = frol_mt, 
+                                 level = 6, 
+                                 report_higher_tax = F, 
+                                 relative = F) %>%
+  # filter(rownames(.) != "NA") %>%
+  mutate_all(funs((./31264)*100))
+barsMT <- plot_taxa_bars(tax_sum_mt,
+                         frol_mt$map_loaded,
+                         "sampleID",
+                         num_taxa = 20,
+                         data_only = TRUE) %>%
+  mutate(taxon = gsub("NA", "Unclassified", taxon)) %>%
+  mutate(taxon = fct_relevel(taxon, "Other", after = Inf)) %>%
+  mutate(taxon = fct_relevel(taxon, "Unclassified", after = Inf)) %>%
+  mutate(taxon = fct_rev(taxon)) %>%
+  left_join(., frol_mt$map_loaded, by = c("group_by" = "sampleID"))
+topmt <- barsMT %>%
+  group_by(taxon) %>%
+  summarise(mean = mean(mean_value)) %>%
+  filter(taxon != "Other") %>%
+  arrange(-mean)
+facet_names <- c("Obs" = "Observational", 
+                 "Field" = "Field",
+                 "Lab" = "Lab",
+                 "Waccamaw" = "Waccamaw",
+                 "Alligator" = "Alligator",
+                 "Delaware" = "Delaware",
+                 "SF" = "SF",
+                 "Freshwater" = "Fresh",
+                 "Oligohaline" = "Oligo")
+nb.cols <- 19
+mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(nb.cols)
+png("FigureS3_forPPT.png", width = 6.5, height = 6, units = "in", res = 300)
+ggplot(barsMT, aes(group_by, mean_value, fill = taxon)) +
+  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  labs(x = "Sample", y = "% Abundance", fill = "Genus") +
+  scale_fill_manual(values = c("grey75", "grey90", mycolors)) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +  
+  facet_nested(~ Exp + Estuary2 + Salt, space = "free", scales = "free_x", 
+               labeller = as_labeller(facet_names)) +
+  guides(fill = guide_legend(ncol = 1)) +
+  theme_classic() +
+  theme(axis.title.y = element_text(face = "bold", size = 12),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        strip.text = element_text(size = 4),
+        strip.background = element_rect(size = 0.2),
+        axis.line.y = element_blank(),
+        legend.margin = margin(0, 0, 0, 0, unit = "pt"),
+        legend.box.margin = margin(5, 5, 5, 5, unit = "pt"),
+        legend.key.size = unit(0.3, "cm"),
+        legend.position = "none")
+dev.off()
+
+# Subsets
+sf_mt <- filter_data(frol_mt,
+                     filter_cat = "Estuary",
+                     keep_vals = "SF")
+de_mt <- filter_data(frol_mt,
+                     filter_cat = "Estuary",
+                     keep_vals = "Delaware")
+detra_mt <- filter_data(de_mt,
+                        filter_cat = "Site",
+                        keep_vals = "Soil mesocosm")
+sc_mt <- filter_data(frol_mt,
+                     filter_cat = "Estuary",
+                     keep_vals = "Waccamaw")
+deinc_mt <- filter_data(de_mt,
+                        filter_cat = "Site",
+                        keep_vals = "Soil incubation")
+nc_mt <- filter_data(frol_mt,
+                     filter_cat = "Estuary",
+                     keep_vals = "Alligator")
+
+# Stats
+tax_sum_mt_sc <- summarize_taxonomy(input = sc_mt, level = 6, report_higher_tax = F) %>%
+  filter(rownames(.) %in% barsMT$taxon)
+res_mt_sc <- taxa_summary_by_sample_type(taxa_smry_df = tax_sum_mt_sc,
+                                          metadata_map = sc_mt$map_loaded, 
+                                          type_header = 'Salt', 
+                                          test_type = 'MW') %>%
+  mutate(Estuary = "Waccamaw",
+         Level = "Genus",
+         Taxon = rownames(.)) %>%
+  arrange(desc(Taxon)) %>%
+  mutate(Sig = ifelse(pvalsFDR < 0.05, "Yes", "No")) %>%
+  mutate(SaltEffect = ifelse(Sig == "Yes",
+                             ifelse(Freshwater > Oligohaline, "-", "+"),
+                             ""))
+
+tax_sum_mt_nc <- summarize_taxonomy(input = nc_mt, level = 6, report_higher_tax = F) %>%
+  filter(rownames(.) %in% barsMT$taxon)
+res_mt_nc <- taxa_summary_by_sample_type(taxa_smry_df = tax_sum_mt_nc,
+                                          metadata_map = nc_mt$map_loaded, 
+                                          type_header = 'Salt',
+                                         test_type = 'MW') %>%
+  mutate(Estuary = "Alligator",
+         Level = "Genus",
+         Taxon = rownames(.)) %>%
+  arrange(desc(Taxon)) %>%
+  mutate(Sig = ifelse(pvalsFDR < 0.05, "Yes", "No")) %>%
+  mutate(SaltEffect = ifelse(Sig == "Yes",
+                             ifelse(Freshwater > Oligohaline, "-", "+"),
+                             ""))
+
+# DE Field
+tax_sum_mt_detra <- summarize_taxonomy(input = detra_mt, level = 6, report_higher_tax = F) %>%
+  filter(rownames(.) %in% barsMT$taxon)
+res_mt_detra <- taxa_summary_by_sample_type(taxa_smry_df = tax_sum_mt_detra,
+                                             metadata_map = detra_mt$map_loaded, 
+                                             type_header = 'Salt', 
+                                             test_type = 'MW') %>%
+  mutate(Estuary = "Delaware Field",
+         Level = "Genus",
+         Taxon = rownames(.)) %>%
+  arrange(desc(Taxon)) %>%
+  mutate(Sig = ifelse(pvalsFDR < 0.05, "Yes", "No")) %>%
+  mutate(SaltEffect = ifelse(Sig == "Yes",
+                             ifelse(Freshwater > Oligohaline, "-", "+"),
+                             ""))
+
+# DE Lab
+tax_sum_mt_deinc <- summarize_taxonomy(input = deinc_mt, level = 6, report_higher_tax = F) %>%
+  filter(rownames(.) %in% barsMT$taxon)
+res_mt_deinc <- taxa_summary_by_sample_type(taxa_smry_df = tax_sum_mt_deinc,
+                                             metadata_map = deinc_mt$map_loaded, 
+                                             type_header = 'Salt', 
+                                             test_type = 'MW') %>%
+  mutate(Estuary = "Delaware Lab",
+         Level = "Genus",
+         Taxon = rownames(.)) %>%
+  arrange(desc(Taxon)) %>%
+  mutate(Sig = ifelse(pvalsFDR < 0.05, "Yes", "No")) %>%
+  mutate(SaltEffect = ifelse(Sig == "Yes",
+                             ifelse(Freshwater > Oligohaline, "-", "+"),
+                             ""))
+
+# SF
+tax_sum_mt_sf <- summarize_taxonomy(input = sf_mt, level = 6, report_higher_tax = F) %>%
+  filter(rownames(.) %in% barsMT$taxon)
+res_mt_sf <- taxa_summary_by_sample_type(taxa_smry_df = tax_sum_mt_sf,
+                                          metadata_map = sf_mt$map_loaded, 
+                                          type_header = 'Salt', 
+                                          test_type = 'MW') %>%
+  mutate(Estuary = "SF",
+         Level = "Genus",
+         Taxon = rownames(.)) %>%
+  arrange(desc(Taxon)) %>%
+  mutate(Sig = ifelse(pvalsFDR < 0.05, "Yes", "No")) %>%
+  mutate(SaltEffect = ifelse(Sig == "Yes",
+                             ifelse(Freshwater > Oligohaline, "-", "+"),
+                             ""))
+
+rownames(res_mt_sc) %notin% rownames(res_mt_sf)
+res_mt_sf <- res_mt_sf %>%
+  add_row(SaltEffect = "", .before = 2)
+rownames(res_mt_sf)[2] <- "MM2"
+res_mt <- res_mt_sc %>%
+  mutate(WA = SaltEffect) %>%
+  mutate(AL = "",
+         DEF = "",
+         DEL = "",
+         SF = res_mt_sf$SaltEffect) %>%
+  dplyr::select(Taxon, SF, WA, DEF, DEL, AL)
+write_xlsx(res_mt, "mt_results_unformatted.xlsx", format_headers = F)
+
 
 
 #### _Indicators ####
@@ -2025,14 +2216,17 @@ plot_venn_diagram2(detra, "Salt", 0.000000000000000000000000000001)
 plot_venn_diagram2_mirror(deinc, "Salt", 0.000000000000000000000000000001)
 plot_venn_diagram2(nc, "Salt", 0.000000000000000000000000000001)
 
-png("FinalFigs/FigureS3.png", width = 9, height = 6, units = "in", res = 300)
+png("FinalFigs/FigureS6.png", width = 9, height = 6, units = "in", res = 300)
 plot_grid(plot_venn_diagram2_mirror(sf, "Salt", 0.000000000000000000000000000001),
           plot_venn_diagram2(sc, "Salt", 0.000000000000000000000000000001),
           plot_venn_diagram2(detra, "Salt", 0.000000000000000000000000000001),
           plot_venn_diagram2_mirror(deinc, "Salt", 0.000000000000000000000000000001),
           plot_venn_diagram2(nc, "Salt", 0.000000000000000000000000000001),
-          labels = c("(a) SF", "(b) WA", "(c) DE Field", 
-                     "(d) DE Lab", "(e) AL"))
+          labels = c("(a) SF (Field obs.)", "(b) Waccamaw (Field exp.)", "(c) Delaware (Field exp.)", 
+                     "(d) Delaware (Lab exp.)", "(e) Alligator (Lab exp.)"),
+          label_size = 10,
+          label_x = -0.15,
+          label_y = 0.9)
 dev.off()
 
 
@@ -2198,7 +2392,7 @@ label.df2 <- data.frame(Dissim = c("Bray-Curtis", "Bray-Curtis",
                               "d = 1.31","d = 1.13","d = 0.25","d = 0.04","d = 1.23")) %>%
   mutate(Exp.x = factor(Exp.x, levels = c("Obs", "Field", "Lab")),
          Estuary2.x = factor(Estuary2.x, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
-#png("FinalFigs/FigureS4.png", width = 8, height = 5, units = "in", res = 300)
+#png("FinalFigs/FigureS8.png", width = 8, height = 5, units = "in", res = 300)
 ggplot(data = comb, aes(comparison, value)) +
   geom_jitter(data = subset(comb, Estuary2.x == "SF"),
               size = 1, alpha = 0.2) +
@@ -2383,7 +2577,7 @@ label_df3 <- data.frame("Exp" = c("Obs", "Obs",
   mutate(Exp = factor(Exp, levels = c("Obs", "Field", "Lab"))) %>%
   mutate(Estuary2 = factor(Estuary2, levels = c("SF", "Waccamaw", "Delaware", "Alligator")))
 
-#png("FinalFigs/FigureS5.png", width = 8, height = 4, units = "in", res = 300)
+#png("FinalFigs/FigureS7.png", width = 8, height = 4, units = "in", res = 300)
 ggplot(frol$map_loaded, aes(Salt, NTI)) +
   geom_hline(yintercept = 2, linetype = "dashed") +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
@@ -2447,3 +2641,51 @@ plot_usmap(exclude = c("AK", "HI"),
                      values = c(24, 21, 23, 22)) +
   theme(legend.position = "none")
 #dev.off()
+
+
+
+#### 6. Biogeochem. ####
+# It would probably be helpful for some readers to see how sites compare in the raw BGC data, not just the correlations with CH4 or salinity.
+# But, what to show? Most useful would be to show variables that were measured in at least 2 sites, that way at least some comparison can be done.
+
+metaComb_long <- melt(frol$map_loaded,
+                      id.vars = c("Estuary2", "sampleID"),
+                      measure.vars = names(frol$map_loaded)[10:68]) %>%
+  filter(variable == "CH4_ug_m2_h" |
+           variable == "CO2_ug_m2_h" |
+           variable == "Salinity_ppt_all" |
+           variable == "pH" |
+           variable == "sed_per_C" |
+           variable == "sed_per_N" |
+           variable == "sed_CN" |
+           variable == "Cl_mgL" |
+           variable == "SO4_mgL" |
+           variable == "TN_mgL" |
+           variable == "Fe_mgL" |
+           variable == "N2O_ug_m2_h" |
+           variable == "NH4_mgL" |
+           variable == "PO4_mgL")
+  
+
+# Sort by sample size
+metaComb_long_n <- metaComb_long %>%
+  group_by(variable) %>%
+  dplyr::summarize(n = sum(!is.na(value))) %>%
+  arrange(desc(n))
+
+metaComb_long$variable <- factor(metaComb_long$variable,
+                                 levels = metaComb_long_n$variable)
+
+png("FinalFigs/FigureS5.png", width = 8, height = 6, units = "in", res = 300)
+ggplot(metaComb_long, aes(Estuary2, value, color = Estuary2)) +
+  geom_boxplot() +
+  scale_color_viridis_d() +
+  labs(x = "Site") +
+  facet_wrap(~ variable, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_blank()) +
+  theme(strip.text = element_text(size = 6),
+        axis.text = element_text(size = 6),
+        legend.position = "none")
+dev.off()
