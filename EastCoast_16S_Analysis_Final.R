@@ -412,6 +412,19 @@ frol$map_loaded$Est3Salt <- factor(frol$map_loaded$Est3Salt,
                                               "Waccamaw_Oligohaline"))
 levels(frol$map_loaded$Est3Salt)
 
+# Add MG:MT ratio to metadata
+frol_guilds <- summarize_taxonomy(input = frol, level = 9, report_higher_tax = F) %>%
+  t() %>%
+  as.data.frame() %>%
+  mutate(sampleID = rownames(.)) %>%
+  mutate(AO_NOB = (AOA + AOB) / NOB) %>%
+  mutate(MG = CH4_ac + CH4_H2 + CH4_me + CH4_mix) %>%
+  mutate(MT = MOB_I + MOB_II + MOB_IIa + ANME) %>%
+  mutate(MG_MT = (CH4_ac + CH4_H2 + CH4_me + CH4_mix)/(ANME + MOB_I + MOB_II + MOB_IIa)) %>%
+  left_join(., frol$map_loaded, by = "sampleID")
+
+frol$map_loaded$MG_MT <- frol_guilds$MG_MT
+
 # Subsets
 sf <- filter_data(frol,
                   filter_cat = "Estuary",
@@ -431,6 +444,40 @@ deinc <- filter_data(de,
 nc <- filter_data(frol,
                   filter_cat = "Estuary",
                   keep_vals = "Alligator")
+
+# Get environmental variables for each
+env <- frol$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, Salinity_ppt_all)
+env_nona <- na.omit(env) # n = 110
+
+env_sf <- sf$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
+                Salinity_ppt_all, SO4_mgL, DOC_mgL, Fe_mgL, Mn_mgL, Cu_mgL, Zn_mgL,
+                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_Bulk_dens,
+                sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL)
+env_nona_sf <- na.omit(env_sf) # n = 30 (just D2)
+
+env_detra <- detra$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, N2O_ug_m2_h, 
+                Salinity_ppt_all, 
+                NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
+                Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
+env_nona_detra <- na.omit(env_detra) # n = 8
+
+env_sc <- sc$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, CH4_pw_air_ppmv,
+                CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
+                N2_umol_m2_h,	SOD_umol_m2_h, NO3_umol_m2_h,	NH4_umol_m2_h, SRP_umol_m2_h, DON_umol_m2_h,
+                Conductivity_uS_cm, Salinity_ppt_all, DIC_mgL,
+                sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg, pH)
+env_nona_sc <- na.omit(env_sc) # n = 15
+
+env_nc <- nc$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, N2O_ug_m2_h, Salinity_ppt_all, 
+                TOC_mgL, TN_mgL, NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL, Br_mgL, NO3_mgL,
+                DIN_mgL, DON_mgL, pH)
+env_nona_nc <- na.omit(env_nc) # n = 8
 
 
 
@@ -519,40 +566,6 @@ dev.off()
 #### _Beta  ####
 # Bray-Curtis dissimilarity
 bc <- calc_dm(frol$data_loaded)
-
-# Get environmental variables for each
-env <- frol$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, Salinity_ppt_all)
-env_nona <- na.omit(env) # n = 110
-
-env_sf <- sf$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
-                Salinity_ppt_all, SO4_mgL, DOC_mgL, Fe_mgL, Mn_mgL, Cu_mgL, Zn_mgL,
-                sed_pH, sed_NH4_mgL, sed_NO3_mgL, sed_PO4_mgL, sed_Cl_mgL, sed_SO4_mgL,
-                sed_per_C, sed_per_N, sed_CN, sed_Bulk_dens,
-                sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL)
-env_nona_sf <- na.omit(env_sf) # n = 30 (just D2)
-
-env_detra <- detra$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, N2O_ug_m2_h, 
-                Salinity_ppt_all, 
-                NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
-                Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
-env_nona_detra <- na.omit(env_detra) # n = 8
-
-env_sc <- sc$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, CH4_pw_air_ppmv,
-                CH4_pot_umol_gdw_h, CO2_pot_umol_gdw_h,
-                N2_umol_m2_h,	SOD_umol_m2_h, NO3_umol_m2_h,	NH4_umol_m2_h, SRP_umol_m2_h, DON_umol_m2_h,
-                Conductivity_uS_cm, Salinity_ppt_all, DIC_mgL,
-                sed_per_C, sed_per_N, sed_CN, sed_per_org, sed_per_inorg, pH)
-env_nona_sc <- na.omit(env_sc) # n = 15
-
-env_nc <- nc$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, N2O_ug_m2_h, Salinity_ppt_all, 
-                TOC_mgL, TN_mgL, NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL, Br_mgL, NO3_mgL,
-                DIN_mgL, DON_mgL, pH)
-env_nona_nc <- na.omit(env_nc) # n = 8
 
 # Stats
 set.seed(100)
@@ -1920,7 +1933,9 @@ sf_corG <- meth_corr_by_taxonomy(input = sf, level = 9, threshold = 0, data = "Y
 sf_corP <- meth_corr_by_taxonomy(input = sf, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+sf_corMGMT <- cor.test(sf$map_loaded$MG_MT, sf$map_loaded$CH4_ug_m2_h, method = "spearman")
 sf_res <- rbind(sf_cor, sf_corG, sf_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(sf_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr < 0.05") %>%
   rename(SF_rho = rho,
          SF_sig = SpearmanPcut)
 sf_res$Variable <- replace(sf_res$Variable, sf_res$Variable == "sed_pH" , "pH")
@@ -1934,7 +1949,9 @@ detra_corG <- meth_corr_by_taxonomy(input = detra, level = 9, threshold = 0, dat
 detra_corP <- meth_corr_by_taxonomy(input = detra, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+detra_corMGMT <- cor.test(detra$map_loaded$MG_MT, detra$map_loaded$CH4_ug_m2_h, method = "spearman")
 de_res <- rbind(detra_cor, detra_corG, detra_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(detra_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr > 0.05") %>%
   rename(DE_rho = rho,
          DE_sig = SpearmanPcut)
 
@@ -1946,7 +1963,9 @@ nc_corG <- meth_corr_by_taxonomy(input = nc, level = 9, threshold = 0, data = "Y
 nc_corP <- meth_corr_by_taxonomy(input = nc, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+nc_corMGMT <- cor.test(nc$map_loaded$MG_MT, nc$map_loaded$CH4_ug_m2_h, method = "spearman")
 nc_res <- rbind(nc_cor, nc_corG, nc_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(nc_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr > 0.05") %>%
   rename(AL_rho = rho,
          AL_sig = SpearmanPcut)
 
@@ -1958,13 +1977,15 @@ sc_corG <- meth_corr_by_taxonomy(input = sc, level = 9, threshold = 0, data = "Y
 sc_corP <- meth_corr_by_taxonomy(input = sc, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+sc_corMGMT <- cor.test(sc$map_loaded$MG_MT, sc$map_loaded$CH4_ug_m2_h, method = "spearman")
 sc_res <- rbind(sc_cor, sc_corG, sc_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(sc_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr > 0.05") %>%
   rename(WA_rho = rho,
          WA_sig = SpearmanPcut)
 
 # Make df
 # Prep. data frame
-CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",  
+CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",  
                                      "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                      "Salinity_ppt_all", "NO3_mgL", "sed_NO3_mgL", 
                                      "N2O_ug_m2_h", "SRP_umol_m2_h", "SO4_mgL", 
@@ -1975,7 +1996,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                      "sed_per_N", "DON_mgL", "DIN_mgL", "TN_mgL", 
                                      "NH4_mgL", "sed_NH4_mgL", "PO4_mgL", "sed_PO4_mgL",
                                      "pH", "Firmicutes"),
-                      "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
+                      "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                       "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                       "Salinity", "NO3", "NO3_s", 
                                       "N2O Flux", "SR", "SO4", "SO4_s", "SRB",
@@ -1983,7 +2004,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                       "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
                                       "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
                                       "PO4_s", "pH", "Firmicutes"),
-                      "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", 
+                      "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Porewater", "Porewater", "Sediment", "Flux", 
                                  "Porewater", "Porewater", "Sediment", "Sediment",
@@ -1993,7 +2014,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                  "Sediment", "Sediment", "Sediment", "Porewater", 
                                  "Porewater", "Porewater", "Porewater", "Sediment", 
                                  "Porewater", "Sediment", "Porewater", "Sediment"),
-                      "Prediction" = c("Positive", "Positive", "Positive", "Positive", 
+                      "Prediction" = c("Positive", "Positive", "Positive", "Positive", "Positive",
                                        "Negative", "Negative", "Negative", "Negative",
                                        "Negative", "Negative", "Negative", "Negative", 
                                        "Negative", "Negative", "Negative", "Negative", 
@@ -2003,7 +2024,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                        "Positive", "Negative", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive"),
-                      "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial",
+                      "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
                                      "Chemical", "Chemical", "Chemical", "Microbial",
@@ -2013,7 +2034,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                      "Chemical", "Chemical", "Chemical", "Chemical",
                                      "Chemical", "Chemical", "Chemical", "Chemical",
                                      "Chemical", "Chemical", "Chemical", "Microbial"),
-                      "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", 
+                      "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", "Methanogens",
                                        "Methanotrophs", "Methanotrophs", "Methanotrophs", "Methanotrophs",
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
@@ -2081,7 +2102,7 @@ pheatmap(CH4_res_mat,
          annotation_colors = ann_colors,
          cluster_rows = F,
          cluster_cols = F,
-         gaps_row = c(4, 8, 21),
+         gaps_row = c(5, 9, 22),
          filename = "FinalFigs/Figure4.png",
          width = 5,
          height = 7)
@@ -2104,7 +2125,9 @@ sf_corG <- meth_corr_by_taxonomy(input = sf, level = 9, threshold = 0, data = "Y
 sf_corP <- meth_corr_by_taxonomy(input = sf, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+sf_corMGMT <- cor.test(sf$map_loaded$MG_MT, sf$map_loaded$Salinity_ppt_all, method = "spearman")
 sf_res <- rbind(sf_cor, sf_corG, sf_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(sf_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr > 0.05") %>%
   rename(SF_rho = rho,
          SF_sig = SpearmanPcut)
 sf_res$Variable <- replace(sf_res$Variable, sf_res$Variable == "sed_pH" , "pH")
@@ -2118,7 +2141,9 @@ detra_corG <- meth_corr_by_taxonomy(input = detra, level = 9, threshold = 0, dat
 detra_corP <- meth_corr_by_taxonomy(input = detra, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+detra_corMGMT <- cor.test(detra$map_loaded$MG_MT, detra$map_loaded$Salinity_ppt_all, method = "spearman")
 de_res <- rbind(detra_cor, detra_corG, detra_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(detra_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr > 0.05") %>%
   rename(DE_rho = rho,
          DE_sig = SpearmanPcut)
 
@@ -2130,7 +2155,9 @@ nc_corG <- meth_corr_by_taxonomy(input = nc, level = 9, threshold = 0, data = "Y
 nc_corP <- meth_corr_by_taxonomy(input = nc, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+nc_corMGMT <- cor.test(nc$map_loaded$MG_MT, nc$map_loaded$Salinity_ppt_all, method = "spearman")
 nc_res <- rbind(nc_cor, nc_corG, nc_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(nc_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr < 0.05") %>%
   rename(AL_rho = rho,
          AL_sig = SpearmanPcut)
 
@@ -2142,13 +2169,15 @@ sc_corG <- meth_corr_by_taxonomy(input = sc, level = 9, threshold = 0, data = "Y
 sc_corP <- meth_corr_by_taxonomy(input = sc, level = 2, threshold = 0.5, data = "Yes") %>%
   rename(Variable = Taxon) %>%
   dplyr::select(Variable, rho, SpearmanPcut)
+sc_corMGMT <- cor.test(sc$map_loaded$MG_MT, sc$map_loaded$Salinity_ppt_all, method = "spearman")
 sc_res <- rbind(sc_cor, sc_corG, sc_corP) %>%
+  add_row("Variable" = "MG:MT", "rho" = round(sc_corMGMT$estimate, digits = 2), "SpearmanPcut" = "Pfdr > 0.05") %>%
   rename(WA_rho = rho,
          WA_sig = SpearmanPcut)
 
 # Make df
 # Prep. data frame
-Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",  
+Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                      "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                      "NO3_mgL", "sed_NO3_mgL", 
                                      "N2O_ug_m2_h", "SRP_umol_m2_h", "SO4_mgL", 
@@ -2159,7 +2188,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                      "sed_per_N", "DON_mgL", "DIN_mgL", "TN_mgL", 
                                      "NH4_mgL", "sed_NH4_mgL", "PO4_mgL", "sed_PO4_mgL",
                                      "pH", "Firmicutes"),
-                      "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
+                      "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                       "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                       "NO3", "NO3_s", 
                                       "N2O Flux", "SR", "SO4", "SO4_s", "SRB",
@@ -2167,7 +2196,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                       "CH4 Flux", "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
                                       "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
                                       "PO4_s", "pH", "Firmicutes"),
-                      "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", 
+                      "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Porewater", "Sediment", "Flux", 
                                  "Porewater", "Porewater", "Sediment", "Sediment",
@@ -2177,7 +2206,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                  "Sediment", "Sediment", "Sediment", "Porewater", 
                                  "Porewater", "Porewater", "Porewater", "Sediment", 
                                  "Porewater", "Sediment", "Porewater", "Sediment"),
-                      "Prediction" = c("Negative", "Negative", "Negative", "Negative", 
+                      "Prediction" = c("Negative", "Negative", "Negative", "Negative", "Negative",
                                        "Negative", "Negative", "Negative", "Negative",
                                        "Positive", "Positive", "Positive",
                                        "Positive", "Positive", "Positive", "Positive", 
@@ -2187,7 +2216,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                        "Positive", "Negative", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive"),
-                      "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial",
+                      "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Microbial",
@@ -2197,7 +2226,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Microbial"),
-                      "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", 
+                      "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", "Methanogens",
                                        "Methanotrophs", "Methanotrophs", "Methanotrophs", "Methanotrophs",
                                        "Alternate e-", "Alternate e-", "Alternate e-",
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
@@ -2265,7 +2294,7 @@ pheatmap(Sal_res_mat,
          annotation_colors = ann_colors,
          cluster_rows = F,
          cluster_cols = F,
-         gaps_row = c(4, 8, 20),
+         gaps_row = c(5, 9, 21),
          filename = "FinalFigs/FigureS2.png",
          width = 5,
          height = 7)
