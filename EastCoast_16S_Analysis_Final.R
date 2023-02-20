@@ -1995,7 +1995,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                      "TOC_mgL", "sed_per_C", "sed_CN", 
                                      "sed_per_N", "DON_mgL", "DIN_mgL", "TN_mgL", 
                                      "NH4_mgL", "sed_NH4_mgL", "PO4_mgL", "sed_PO4_mgL",
-                                     "pH", "Firmicutes"),
+                                     "pH", "Firmicutes", "Actinobacteriota"),
                       "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                       "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                       "Salinity", "NO3", "NO3_s", 
@@ -2003,7 +2003,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                       "Fe", "Fe_s", "FeRB", "Mn", "Mn_s", 
                                       "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
                                       "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
-                                      "PO4_s", "pH", "Firmicutes"),
+                                      "PO4_s", "pH", "Firmicutes", "Actinobacteriota"),
                       "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Porewater", "Porewater", "Sediment", "Flux", 
@@ -2013,7 +2013,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                  "Flux", "Sediment", "Porewater", "Porewater", 
                                  "Sediment", "Sediment", "Sediment", "Porewater", 
                                  "Porewater", "Porewater", "Porewater", "Sediment", 
-                                 "Porewater", "Sediment", "Porewater", "Sediment"),
+                                 "Porewater", "Sediment", "Porewater", "Sediment", "Sediment"),
                       "Prediction" = c("Positive", "Positive", "Positive", "Positive", "Positive",
                                        "Negative", "Negative", "Negative", "Negative",
                                        "Negative", "Negative", "Negative", "Negative", 
@@ -2023,7 +2023,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                        "Positive", "Positive", "Positive", "Positive",
                                        "Positive", "Negative", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive", 
-                                       "Positive", "Positive", "Positive", "Positive"),
+                                       "Positive", "Positive", "Positive", "Positive", "Positive"),
                       "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
@@ -2033,7 +2033,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                      "Chemical", "Chemical", "Chemical", "Chemical",
                                      "Chemical", "Chemical", "Chemical", "Chemical",
                                      "Chemical", "Chemical", "Chemical", "Chemical",
-                                     "Chemical", "Chemical", "Chemical", "Microbial"),
+                                     "Chemical", "Chemical", "Chemical", "Microbial", "Microbial"),
                       "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", "Methanogens",
                                        "Methanotrophs", "Methanotrophs", "Methanotrophs", "Methanotrophs",
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
@@ -2043,7 +2043,8 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition",
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
-                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition")) %>%
+                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
+                                       "Decomposition")) %>%
   left_join(., sf_res, by = "Variable") %>%
   left_join(., de_res, by = "Variable") %>%
   left_join(., nc_res, by = "Variable") %>%
@@ -2187,7 +2188,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                      "TOC_mgL", "sed_per_C", "sed_CN", 
                                      "sed_per_N", "DON_mgL", "DIN_mgL", "TN_mgL", 
                                      "NH4_mgL", "sed_NH4_mgL", "PO4_mgL", "sed_PO4_mgL",
-                                     "pH", "Firmicutes"),
+                                     "pH", "Firmicutes", "Actinobacteriota"),
                       "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                       "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                       "NO3", "NO3_s", 
@@ -2195,7 +2196,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                       "Fe", "Fe_s", "FeRB", "Mn", "Mn_s", 
                                       "CH4 Flux", "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
                                       "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
-                                      "PO4_s", "pH", "Firmicutes"),
+                                      "PO4_s", "pH", "Firmicutes", "Actinobacteriota"),
                       "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Porewater", "Sediment", "Flux", 
@@ -2205,7 +2206,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                  "Flux", "Flux", "Sediment", "Porewater", "Porewater", 
                                  "Sediment", "Sediment", "Sediment", "Porewater", 
                                  "Porewater", "Porewater", "Porewater", "Sediment", 
-                                 "Porewater", "Sediment", "Porewater", "Sediment"),
+                                 "Porewater", "Sediment", "Porewater", "Sediment", "Sediment"),
                       "Prediction" = c("Negative", "Negative", "Negative", "Negative", "Negative",
                                        "Negative", "Negative", "Negative", "Negative",
                                        "Positive", "Positive", "Positive",
@@ -2215,7 +2216,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                        "Negative", "Positive", "Positive", "Positive", "Positive",
                                        "Positive", "Negative", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive", 
-                                       "Positive", "Positive", "Positive", "Positive"),
+                                       "Positive", "Positive", "Positive", "Positive", "Positive"),
                       "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Chemical", "Chemical", "Chemical",
@@ -2225,7 +2226,7 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                           "Chemical", "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
-                                          "Chemical", "Chemical", "Chemical", "Microbial"),
+                                          "Chemical", "Chemical", "Chemical", "Microbial", "Microbial"),
                       "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", "Methanogens",
                                        "Methanotrophs", "Methanotrophs", "Methanotrophs", "Methanotrophs",
                                        "Alternate e-", "Alternate e-", "Alternate e-",
@@ -2235,7 +2236,8 @@ Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", "Decomposition",
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
-                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition")) %>%
+                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition",
+                                       "Decomposition")) %>%
   left_join(., sf_res, by = "Variable") %>%
   left_join(., de_res, by = "Variable") %>%
   left_join(., nc_res, by = "Variable") %>%
