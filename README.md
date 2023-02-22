@@ -5,6 +5,7 @@
 ## Overall goals are to understand how microbial ecology contributes to methane emissions across salinity gradients
 ## Collaboration with Emily Bernhardt, Marcelo Ardón, Scott Neubauer, Nat Weston
 ## Exploratory figures in "InitialFigs" folder
+## Final figures and supplemental figures for manuscript in "FinalFigs" folder
 ### Figure name prefix key:
 Comb_All = Combined all SF Bay and East Coast samples (n = 343)\
 Comb_Control = Combined SF Bay and East Coast unmanipulated field samples only\
