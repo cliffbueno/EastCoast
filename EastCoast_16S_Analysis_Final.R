@@ -2538,6 +2538,43 @@ plot_grid(plot_venn_diagram2_mirror(sf, "Salt", 0.000000000000000000000000000001
           label_y = 0.9)
 dev.off()
 
+# Also get site Venn at all levels - Figure S10
+# Need short site names
+frol$map_loaded$EstuaryShort <- recode_factor(frol$map_loaded$Estuary2,
+                                            "SF" = "SF",
+                                            "Waccamaw" = "WA",
+                                            "Delaware" = "DE",
+                                            "Alligator" = "AL")
+frol$map_loaded$EstuaryShort <- factor(frol$map_loaded$EstuaryShort,
+                                       levels = c("SF", "WA", "DE", "AL"))
+phy <- summarize_taxonomy(frol, level = 2, report_higher_tax = F)
+cla <- summarize_taxonomy(frol, level = 3, report_higher_tax = F)
+ord <- summarize_taxonomy(frol, level = 4, report_higher_tax = F)
+fam <- summarize_taxonomy(frol, level = 5, report_higher_tax = F)
+gen <- summarize_taxonomy(frol, level = 6, report_higher_tax = F)
+
+input_phylum <- frol
+input_phylum$data_loaded <- phy
+input_class <- frol
+input_class$data_loaded <- cla
+input_order <- frol
+input_order$data_loaded <- ord
+input_family <- frol
+input_family$data_loaded <- fam
+input_genus <- frol
+input_genus$data_loaded <- gen
+
+png("FinalFigs/FigureS10.png", width = 9, height = 6, units = "in", res = 300)
+plot_grid(plot_venn_diagram(input_phylum, "EstuaryShort", 0.00000000000000001),
+          plot_venn_diagram(input_class, "EstuaryShort", 0.00000000000000001),
+          plot_venn_diagram(input_order, "EstuaryShort", 0.00000000000000001),
+          plot_venn_diagram(input_family, "EstuaryShort", 0.00000000000000001),
+          plot_venn_diagram(input_genus, "EstuaryShort", 0.00000000000000001),
+          plot_venn_diagram(frol, "EstuaryShort", 0.00000000000000001),
+          labels = c("(a) Phylum", "(b) Class", "(c) Order", 
+                     "(d) Family", "(e) Genus", "(f) OTU"))
+dev.off()
+
 
 
 #### _Jaccard/Bray ####
@@ -2974,7 +3011,6 @@ metaComb_long <- melt(frol$map_loaded,
            variable == "N2O_ug_m2_h" |
            variable == "NH4_mgL" |
            variable == "PO4_mgL")
-  
 
 # Sort by sample size
 metaComb_long_n <- metaComb_long %>%
@@ -2985,6 +3021,15 @@ metaComb_long_n <- metaComb_long %>%
 metaComb_long$variable <- factor(metaComb_long$variable,
                                  levels = metaComb_long_n$variable)
 metaComb_long <- subset(metaComb_long, variable != "CH4_ug_m2_h")
+metaComb_long <- subset(metaComb_long, sampleID != "WestPond_CattailA_D1")
+metaComb_long <- subset(metaComb_long, sampleID != "WestPond_CattailA_D2")
+
+# SF Cl is in wrong units - divide by 35.453
+metaComb_long <- metaComb_long %>%
+  mutate(value2 = value/35.453)
+SF_Cl <- subset(metaComb_long, Estuary2 == "SF" & variable == "Cl_mgL")
+SF_Cl$value <- SF_Cl$value2
+metaComb_long <- rbind(metaComb_long, SF_Cl)
 
 facet_names <- c("CO2_ug_m2_h" = "CO2 Flux (ug/m2/h)", 
                  "Salinity_ppt_all" = "Salinity (ppt)",
@@ -3007,8 +3052,8 @@ strip <- strip_themed(background_x = elem_list_rect(fill = c("#FFFF99", "#A6CEE3
 png("FinalFigs/FigureS6.png", width = 8, height = 6, units = "in", res = 300)
 ggplot(metaComb_long, aes(Estuary2, value, color = Estuary2)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
-  geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
-              aes(fill = Depth, shape = Estuary2, colour = Salt)) +
+  geom_point(size = 2, alpha = 0.75, position = position_jitterdodge(),
+              aes(shape = Estuary2, colour = Salt)) +
   labs(x = "Site",
        colour = "Salinity",
        fill = "Depth (cm)",
