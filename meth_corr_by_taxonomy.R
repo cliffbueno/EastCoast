@@ -121,7 +121,9 @@ if (length(levels(methcor_long$P)) == 2) {
          y = "Correlation coefficient",
          shape = "Test",
          colour = "Significance") +
-    scale_colour_manual(values = c("#F8766D", "#619CFF")) +
+    scale_colour_manual(values = c("#F8766D", "#619CFF"),
+                        labels = c(bquote(""~P[FDR]*" < 0.05"), 
+                                   bquote(""~P[FDR]*" > 0.05"))) +
     coord_flip() +
     theme_bw() +
     theme(legend.position = c(1,0),
@@ -132,10 +134,11 @@ if (length(levels(methcor_long$P)) == 2) {
           axis.text = element_text(size = 6))
 
 }
-meth_corr_plot
 }
 
 if (data == "Yes") {
-  methcor
+  meth_corr_plot <- methcor
 }
+
+meth_corr_plot
 }

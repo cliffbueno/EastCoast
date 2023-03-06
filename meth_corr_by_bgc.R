@@ -1,6 +1,5 @@
 # Function for running correlations with each environmental variable in a dataframe with no NAs
 # Procedure:
-# Take an mctoolsr object
 # 1. Take environmental dataframe, extract variable of interest, and remove it from df
 # 2. Run correlations
 # 3. Plot
@@ -85,7 +84,8 @@ meth_corr_by_bgc <- function(env_nona) {
            y = "Correlation coefficient",
            shape = "Test",
            colour = "Significance") +
-      scale_colour_manual(values = "#619CFF") +
+      scale_colour_manual(values = "#619CFF",
+                          labels = bquote(""~P[FDR]*"> 0.05")) +
       coord_flip() +
       theme_bw() +
       theme(legend.position = c(1,0),
@@ -105,7 +105,9 @@ meth_corr_by_bgc <- function(env_nona) {
            y = "Correlation coefficient",
            shape = "Test",
            colour = "Significance") +
-      scale_colour_manual(values = c("#F8766D", "#619CFF")) +
+      scale_colour_manual(values = c("#F8766D", "#619CFF"),
+                          labels = c(bquote(""~P[FDR]*" < 0.05"), 
+                                     bquote(""~P[FDR]*" > 0.05"))) +
       coord_flip() +
       theme_bw() +
       theme(legend.position = c(1,0),
