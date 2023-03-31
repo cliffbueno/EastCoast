@@ -1,6 +1,6 @@
 # East Coast/SF 16S final data analysis
-# by Cliff Bueno de Mesquita, Tringe Lab, JGI, Fall 2022
-# Samples from SF Bay, Delaware River, 
+# by Cliff Bueno de Mesquita, Tringe Lab, JGI, Fall 2022 - Spring 2023
+# Samples from SF Bay, Delaware River, SC, NC
 # Use just freshwater to oligohaline samples
 # Just control and +ASW treatment, or transplants to oligohaline site
 # SF: freshwater, oligohaline
@@ -425,6 +425,29 @@ frol_guilds <- summarize_taxonomy(input = frol, level = 9, report_higher_tax = F
 
 frol$map_loaded$MG_MT <- frol_guilds$MG_MT
 
+# Add NC C, N, CN. Got data later so adding here!
+nc_cn <- read_excel("Copy of CHN data.xls", sheet = 2) %>%
+  slice(12:91) %>%
+  dplyr::select(Name, `%N`, `%C`, `C:N`) %>%
+  mutate(Name = gsub("bottom", "bot", Name)) %>%
+  separate(Name, into = c("ID", "Depth"), sep = " ", remove = F) %>%
+  mutate(Treatment = substr(ID, start = 1, stop = 1),
+         Hydro = substr(ID, start = 2, stop = 2),
+         Replicate = substr(ID, start = 3, stop = 3)) %>%
+  filter(Hydro == "F") %>%
+  mutate(Treatment = recode_factor(Treatment,
+                                   "A" = "Control",
+                                   "B" = "ASW",
+                                   "C" = "ASW_noS",
+                                   "D" = "SO4")) %>%
+  filter(Treatment %in% c("Control", "ASW")) %>%
+  arrange(desc(Depth), desc(Treatment)) %>%
+  filter(Name %notin% c("BF1 top", "BF2 top", "AF1 top", "BF2 bot", "AF2 bot"))
+rownames(frol$map_loaded)
+frol$map_loaded$sed_per_C[47:61] <- nc_cn$`%C`
+frol$map_loaded$sed_per_N[47:61] <- nc_cn$`%N`
+frol$map_loaded$sed_CN[47:61] <- nc_cn$`C:N`
+
 # Subsets
 sf <- filter_data(frol,
                   filter_cat = "Estuary",
@@ -476,8 +499,8 @@ env_nona_sc <- na.omit(env_sc) # n = 15
 env_nc <- nc$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, N2O_ug_m2_h, Salinity_ppt_all, 
                 TOC_mgL, TN_mgL, NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL, Br_mgL, NO3_mgL,
-                DIN_mgL, DON_mgL, pH)
-env_nona_nc <- na.omit(env_nc) # n = 8
+                DIN_mgL, DON_mgL, pH, sed_per_C, sed_per_N, sed_CN)
+env_nona_nc <- na.omit(env_nc) # n = 15
 
 
 
@@ -596,33 +619,6 @@ pcoaA2 <- round((eigenvals(pcoa)/sum(eigenvals(pcoa)))[2]*100, digits = 1)
 frol$map_loaded$Axis01 <- scores(pcoa)[,1]
 frol$map_loaded$Axis02 <- scores(pcoa)[,2]
 
-# Get legend
-micro.hulls <- ddply(frol$map_loaded, c("Salt"), find_hull)
-g_forleg <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
-  geom_polygon(data = micro.hulls, 
-               aes(colour = Salt), fill = NA,
-               alpha = 0.1, show.legend = F) +
-  geom_point(size = 3, alpha = 0.5, aes(fill = Depth, colour = Salt, shape = Estuary),
-             show.legend = T) +
-  labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
-       y = paste("PC2: ", pcoaA2, "%", sep = ""),
-       colour = "Salinity",
-       fill = "Depth (cm)",
-       shape = "Site") +
-  scale_colour_manual(values = c("blue", "red")) +
-  scale_fill_manual(values = c("black", "white")) +
-  scale_shape_manual(values = c(21, 22, 23, 24)) +
-  guides(shape = guide_legend(order = 1,),
-         colour = guide_legend(order = 2),
-         fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
-  theme_bw() +  
-  theme(legend.position = "right",
-        legend.spacing.y = unit(0.1, "cm"),
-        legend.margin = margin(0.25, 0, 0, -0.1, unit = "cm"),
-        axis.title = element_text(face = "bold", size = 12), 
-        axis.text = element_text(size = 10))
-leg <- get_legend(g_forleg)
-
 # Plot
 micro.hulls <- ddply(frol$map_loaded, c("EstSalt"), find_hull)
 g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
@@ -645,7 +641,7 @@ g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
          fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
   theme_bw() +  
   ggtitle("(a) Combined") +
-  theme(legend.position = "none",
+  theme(legend.position = "right",
         legend.spacing.y = unit(0.1, "cm"),
         legend.margin = margin(0.25, 0, 0, -0.1, unit = "cm"),
         axis.title = element_text(size = 10), 
@@ -660,6 +656,8 @@ g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
   geom_text(data = vec.df,
             aes(x = Dim1, y = Dim2, label = shortnames),
             size = 2, color = "black")
+leg <- get_legend(g)
+g <- g + theme(legend.position = "none")
 g
 
 # Ordistep
@@ -843,6 +841,7 @@ mod$anova # SOD, CO2
 
 # Note: in initial analysis, thought there was error, but looks like maybe there isn't
 # Just not clear separation, no hard evidence of any sample label error
+# Note no env. data here
 bc_deinc <- calc_dm(deinc$data_loaded)
 env_deinc <- deinc$map_loaded %>%
   dplyr::select(Salinity_ppt_all, 
