@@ -59,13 +59,13 @@ find_hull <- function(df) df[chull(df$Axis01, df$Axis02),]
 source("~/Documents/GitHub/SF_microbe_methane/modules/3_OTU_subsetting_modules_v.0.4_strip.r")
 
 # Correlations
-source("~/Documents/GitHub/EastCoast/meth_corr_by_taxonomy.R")
-source("~/Documents/GitHub/EastCoast/meth_corr_by_bgc.R")
-source("~/Documents/GitHub/EastCoast/multiple_correlations.R")
+source("~/Documents/GitHub/EastCoast/code/meth_corr_by_taxonomy.R")
+source("~/Documents/GitHub/EastCoast/code/meth_corr_by_bgc.R")
+source("~/Documents/GitHub/EastCoast/code/multiple_correlations.R")
 
 # Plotting
-source("~/Documents/GitHub/EastCoast/cliffplot_taxa_bars.R")
-source("~/Documents/GitHub/EastCoast/plot_venn_diagram2.R")
+source("~/Documents/GitHub/EastCoast/code/cliffplot_taxa_bars.R")
+source("~/Documents/GitHub/EastCoast/code/plot_venn_diagram2.R")
 
 # Repository path
 setwd("~/Documents/GitHub/EastCoast/")
@@ -316,7 +316,7 @@ frol$map_loaded$shannon <- diversity(frol$data_loaded,
 
 
 #### 2. Combined ####
-frol <- readRDS("frol.rds")
+frol <- readRDS("data/frol.rds")
 frol$map_loaded$EstSalt <- factor(frol$map_loaded$EstSalt,
                                   levels = c("Alligator_Oligohaline", "Alligator_Freshwater",
                                             "Delaware_Oligohaline", "Delaware_Freshwater", 
@@ -426,7 +426,7 @@ frol_guilds <- summarize_taxonomy(input = frol, level = 9, report_higher_tax = F
 frol$map_loaded$MG_MT <- frol_guilds$MG_MT
 
 # Add NC C, N, CN. Got data later so adding here!
-nc_cn <- read_excel("Copy of CHN data.xls", sheet = 2) %>%
+nc_cn <- read_excel("data/Copy of CHN data.xls", sheet = 2) %>%
   slice(12:91) %>%
   dplyr::select(Name, `%N`, `%C`, `C:N`) %>%
   mutate(Name = gsub("bottom", "bot", Name)) %>%
@@ -553,7 +553,7 @@ facet_df <- c("rich" = "(a) Richness",
               "shannon" = "(b) Shannon")
 alpha_long <- frol$map_loaded %>%
   pivot_longer(cols = c("rich", "shannon"))
-png("FinalFigs/Figure1.png", width = 7, height = 4.5, units = "in", res = 300)
+png("FinalFigs/Figure2.png", width = 7, height = 4.5, units = "in", res = 300)
 ggplot(alpha_long, aes(Est3Salt, value)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
   geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
@@ -583,6 +583,36 @@ ggplot(alpha_long, aes(Est3Salt, value)) +
         strip.text = element_text(size = 10),
         plot.margin = margin(5, 5, 5, 30, "pt"))
 dev.off()
+
+# Remake without barplot and extract legend for beta diversity plot
+good_leg_plot <- ggplot(alpha_long, aes(Est3Salt, value)) +
+  geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
+              aes(fill = Depth, shape = Estuary, colour = Salt)) +
+  geom_text(data = label_df, aes(Est3Salt, y, label = str_trim(.group)), 
+            size = 4, color = "black") +
+  labs(x = "Site",
+       colour = "Salinity",
+       fill = "Depth (cm)",
+       shape = "Site") +
+  scale_colour_manual(values = c("blue", "red")) +
+  scale_fill_manual(values = c("black", "white")) +
+  scale_shape_manual(breaks = c( "SF", "Waccamaw", "Delaware", "Alligator"), 
+                     values = c(24, 21, 23, 22)) +
+  guides(shape = guide_legend(order = 1,),
+         colour = guide_legend(order = 2),
+         fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
+  facet_wrap(~ name, ncol = 2, scales = "free_y", labeller = as_labeller(facet_df)) +
+  theme_bw() +
+  theme(legend.position = "right",
+        legend.spacing.y = unit(0.1, "cm"),
+        legend.margin = margin(0.25, 0, 0, -0.1, unit = "cm"),
+        legend.key.size = unit(0.4, "cm"),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        strip.text = element_text(size = 10),
+        plot.margin = margin(5, 5, 5, 30, "pt"))
+good_leg <- get_legend(good_leg_plot)
 
 
 
@@ -656,7 +686,7 @@ g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
   geom_text(data = vec.df,
             aes(x = Dim1, y = Dim2, label = shortnames),
             size = 2, color = "black")
-leg <- get_legend(g)
+# leg <- get_legend(g) # use good_leg from alpha diversity plot
 g <- g + theme(legend.position = "none")
 g
 
@@ -716,7 +746,7 @@ g2 <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
   theme_bw() +
-  ggtitle("(b) SF") +
+  ggtitle("(b) SF (field obs.)") +
   theme(legend.position = "none",
         axis.title = element_text(size = 10), 
         axis.text = element_text(size = 10),
@@ -770,7 +800,7 @@ g3 <- ggplot(detra$map_loaded, aes(Axis01, Axis02)) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
   theme_bw() +
-  ggtitle("(c) Delaware (field exp.)") +
+  ggtitle("(d) Delaware (field exp.)") +
   theme(legend.position = "none",
         axis.title = element_text(size = 10), 
         axis.text = element_text(size = 10),
@@ -824,7 +854,7 @@ g4 <- ggplot(sc$map_loaded, aes(Axis01, Axis02)) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
   theme_bw() +
-  ggtitle("(d) Waccamaw (field exp.)") +
+  ggtitle("(c) Waccamaw (field exp.)") +
   theme(legend.position = "none",
         axis.title = element_text(size = 10), 
         axis.text = element_text(size = 10),
@@ -955,12 +985,13 @@ mod <- ordistep(mod0, scope = formula(mod1))
 mod
 mod$anova # SO4, CH4, PO4
 
-pcoa_plots <- plot_grid(g, g2, g3, g4, g5, g6, ncol = 2)
-fig2 <- plot_grid(pcoa_plots, leg, rel_widths = c(0.85, 0.15))
-fig2
-#png("FinalFigs/Figure2.png", width = 8, height = 6, units = "in", res = 300)
-fig2
-#dev.off()
+pcoa_plots <- plot_grid(g, g2, g4, g3, g5, g6, ncol = 2)
+fig3 <- plot_grid(pcoa_plots, good_leg, rel_widths = c(0.85, 0.15))
+fig3
+png("FinalFigs/Figure3.png", width = 8, height = 6, units = "in", res = 300)
+fig3
+dev.off()
+
 
 
 #### _Taxa ####
@@ -1040,6 +1071,12 @@ topgui <- barsG %>%
   group_by(taxon) %>%
   summarise(mean = mean(mean_value)) %>%
   arrange(-mean)
+topgui_t <- topgui %>%
+  column_to_rownames(var = "taxon") %>%
+  t() %>%
+  as.data.frame() %>%
+  mutate(MG = CH4_H2 + CH4_me + CH4_ac + CH4_mix) %>%
+  mutate(MT = MOB_I + MOB_II + MOB_IIa + ANME)
 gui <- ggplot(barsG, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
   labs(x = "Sample", y = "Relative abundance", fill = "Guild") +
@@ -1419,6 +1456,12 @@ ggplot(barsMG, aes(group_by, mean_value, fill = taxon)) +
         legend.key.size = unit(0.3, "cm"),
         legend.position = "none")
 dev.off()
+
+# Venn
+frol_mg$map_loaded$Site <- as.factor(frol_mg$map_loaded$Site)
+plot_venn_diagram(frol_mg, 
+                  "Estuary", 
+                  0.00000000000000000000000000000000001)
 
 # Subsets
 sf_mg <- filter_data(frol_mg,
@@ -1984,10 +2027,11 @@ sc_res <- rbind(sc_cor, sc_corG, sc_corP) %>%
 
 # Make df
 # Prep. data frame
+# Update, need to merge WA SRP_umol_m2_h and DE SR_umol_cm3_d as SR column
 CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",  
                                      "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                      "Salinity_ppt_all", "NO3_mgL", "sed_NO3_mgL", 
-                                     "N2O_ug_m2_h", "SRP_umol_m2_h", "SO4_mgL", 
+                                     "N2O_ug_m2_h", "SRP_umol_m2_h", "SR_umol_cm3_d", "SO4_mgL", 
                                      "sed_SO4_mgL", "SRB", "Fe_mgL", "sed_Fe_mgL", 
                                      "FeRB", "Mn_mgL", "sed_Mn_mgL",  
                                      "CO2_ug_m2_h", "sed_per_org", "DOC_mgL", 
@@ -1998,7 +2042,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                       "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                       "ANME", "MOB_I", "MOB_II", "MOB_IIa",
                                       "Salinity", "NO3", "NO3_s", 
-                                      "N2O Flux", "SR", "SO4", "SO4_s", "SRB",
+                                      "N2O Flux", "SR", "SR", "SO4", "SO4_s", "SRB",
                                       "Fe", "Fe_s", "FeRB", "Mn", "Mn_s", 
                                       "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
                                       "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
@@ -2006,7 +2050,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                       "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Porewater", "Porewater", "Sediment", "Flux", 
-                                 "Porewater", "Porewater", "Sediment", "Sediment",
+                                 "Sediment", "Sediment", "Porewater", "Sediment", "Sediment",
                                  "Porewater", "Sediment", "Sediment", "Porewater", 
                                  "Sediment", 
                                  "Flux", "Sediment", "Porewater", "Porewater", 
@@ -2016,7 +2060,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                       "Prediction" = c("Positive", "Positive", "Positive", "Positive", "Positive",
                                        "Negative", "Negative", "Negative", "Negative",
                                        "Negative", "Negative", "Negative", "Negative", 
-                                       "Negative", "Negative", "Negative", "Negative", 
+                                       "Negative", "Negative", "Negative", "Negative", "Negative", 
                                        "Negative", "Negative", "Negative", "Negative",
                                        "Negative", 
                                        "Positive", "Positive", "Positive", "Positive",
@@ -2026,7 +2070,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                       "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
-                                     "Chemical", "Chemical", "Chemical", "Microbial",
+                                     "Microbial", "Microbial", "Chemical", "Chemical", "Microbial",
                                      "Chemical", "Chemical", "Microbial", "Chemical",
                                      "Chemical",
                                      "Chemical", "Chemical", "Chemical", "Chemical",
@@ -2038,7 +2082,7 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-",
-                                       "Alternate e-", 
+                                       "Alternate e-", "Alternate e-",
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition",
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
@@ -2048,12 +2092,23 @@ CH4_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "M
   left_join(., de_res, by = "Variable") %>%
   left_join(., nc_res, by = "Variable") %>%
   left_join(., sc_res, by = "Variable")
+for (i in 1:nrow(CH4_res)) {
+  if(CH4_res$Variable[i] == "SRP_umol_m2_h") {
+         CH4_res$DE_rho[i] <- 0.10
+  }
+  if(CH4_res$Variable[i] == "SRP_umol_m2_h") {
+    CH4_res$DE_sig[i] <- "Pfdr > 0.05"
+  }
+}
+CH4_res <- subset(CH4_res, Variable != "SR_umol_cm3_d")
 
 # Pretty heatmap
 CH4_res_meta <- CH4_res %>%
   dplyr::select(Shortname, Type, Variable.Type, Hypothesis, Prediction, SF_sig, WA_sig, DE_sig, AL_sig) %>%
   mutate_if(is.character, as.factor)
 CH4_res_mat <- CH4_res %>%
+  rownames_to_column(var = "Num") %>%
+  dplyr::select(-Num) %>%
   column_to_rownames(var = "Shortname") %>%
   dplyr::select(SF_rho, WA_rho, DE_rho, AL_rho) %>%
   as.matrix()
@@ -2113,7 +2168,7 @@ dev.set(dev.next())
 
 
 #### _Sal ####
-# Correlations between CH4 and BGC and Guilds by each site
+# Correlations between salinity and BGC and Guilds by each site
 # Use the custom functions written to do this
 
 # Get all corrs
@@ -2177,76 +2232,88 @@ sc_res <- rbind(sc_cor, sc_corG, sc_corP) %>%
 
 # Make df
 # Prep. data frame
-Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
+# Update, need to merge WA SRP_umol_m2_h and DE SR_umol_cm3_d as SR column
+Sal_res <- data.frame("Variable" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",  
                                      "ANME", "MOB_I", "MOB_II", "MOB_IIa",
-                                     "NO3_mgL", "sed_NO3_mgL", 
-                                     "N2O_ug_m2_h", "SRP_umol_m2_h", "SO4_mgL", 
+                                     "Salinity_ppt_all", "NO3_mgL", "sed_NO3_mgL", 
+                                     "N2O_ug_m2_h", "SRP_umol_m2_h", "SR_umol_cm3_d", "SO4_mgL", 
                                      "sed_SO4_mgL", "SRB", "Fe_mgL", "sed_Fe_mgL", 
                                      "FeRB", "Mn_mgL", "sed_Mn_mgL",  
-                                     "CH4_ug_m2_h", "CO2_ug_m2_h", "sed_per_org", "DOC_mgL", 
+                                     "CO2_ug_m2_h", "sed_per_org", "DOC_mgL", 
                                      "TOC_mgL", "sed_per_C", "sed_CN", 
                                      "sed_per_N", "DON_mgL", "DIN_mgL", "TN_mgL", 
                                      "NH4_mgL", "sed_NH4_mgL", "PO4_mgL", "sed_PO4_mgL",
                                      "pH", "Firmicutes", "Actinobacteriota"),
                       "Shortname" = c("CH4_H2", "CH4_ac", "CH4_me", "CH4_mix", "MG:MT",
                                       "ANME", "MOB_I", "MOB_II", "MOB_IIa",
-                                      "NO3", "NO3_s", 
-                                      "N2O Flux", "SR", "SO4", "SO4_s", "SRB",
+                                      "Salinity", "NO3", "NO3_s", 
+                                      "N2O Flux", "SR", "SR", "SO4", "SO4_s", "SRB",
                                       "Fe", "Fe_s", "FeRB", "Mn", "Mn_s", 
-                                      "CH4 Flux", "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
+                                      "CO2 Flux", "SOM", "DOC", "TOC", "C", "C:N", 
                                       "N", "DON", "DIN", "TN", "NH4", "NH4_s", "PO4",
                                       "PO4_s", "pH", "Firmicutes", "Actinobacteriota"),
                       "Type" = c("Sediment", "Sediment", "Sediment", "Sediment", "Sediment",
                                  "Sediment", "Sediment", "Sediment", "Sediment",
-                                 "Porewater", "Sediment", "Flux", 
-                                 "Porewater", "Porewater", "Sediment", "Sediment",
+                                 "Porewater", "Porewater", "Sediment", "Flux", 
+                                 "Sediment", "Sediment", "Porewater", "Sediment", "Sediment",
                                  "Porewater", "Sediment", "Sediment", "Porewater", 
                                  "Sediment", 
-                                 "Flux", "Flux", "Sediment", "Porewater", "Porewater", 
+                                 "Flux", "Sediment", "Porewater", "Porewater", 
                                  "Sediment", "Sediment", "Sediment", "Porewater", 
                                  "Porewater", "Porewater", "Porewater", "Sediment", 
                                  "Porewater", "Sediment", "Porewater", "Sediment", "Sediment"),
-                      "Prediction" = c("Negative", "Negative", "Negative", "Negative", "Negative",
+                      "Prediction" = c("Positive", "Positive", "Positive", "Positive", "Positive",
                                        "Negative", "Negative", "Negative", "Negative",
-                                       "Positive", "Positive", "Positive",
-                                       "Positive", "Positive", "Positive", "Positive", 
+                                       "Negative", "Negative", "Negative", "Negative", 
+                                       "Negative", "Negative", "Negative", "Negative", "Negative", 
+                                       "Negative", "Negative", "Negative", "Negative",
+                                       "Negative", 
                                        "Positive", "Positive", "Positive", "Positive",
-                                       "Positive", 
-                                       "Negative", "Positive", "Positive", "Positive", "Positive",
                                        "Positive", "Negative", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive", 
                                        "Positive", "Positive", "Positive", "Positive", "Positive"),
                       "Variable Type" = c("Microbial", "Microbial", "Microbial", "Microbial", "Microbial",
                                           "Microbial", "Microbial", "Microbial", "Microbial",
-                                          "Chemical", "Chemical", "Chemical",
-                                          "Chemical", "Chemical", "Chemical", "Microbial",
+                                          "Chemical", "Chemical", "Chemical", "Chemical",
+                                          "Microbial", "Microbial", "Chemical", "Chemical", "Microbial",
                                           "Chemical", "Chemical", "Microbial", "Chemical",
                                           "Chemical",
-                                          "Chemical", "Chemical", "Chemical", "Chemical", "Chemical",
+                                          "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Chemical",
                                           "Chemical", "Chemical", "Chemical", "Microbial", "Microbial"),
                       "Hypothesis" = c("Methanogens", "Methanogens", "Methanogens", "Methanogens", "Methanogens",
                                        "Methanotrophs", "Methanotrophs", "Methanotrophs", "Methanotrophs",
-                                       "Alternate e-", "Alternate e-", "Alternate e-",
+                                       "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-", 
                                        "Alternate e-", "Alternate e-", "Alternate e-", "Alternate e-",
-                                       "Alternate e-", 
-                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", "Decomposition",
-                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
-                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
+                                       "Alternate e-", "Alternate e-",
                                        "Decomposition", "Decomposition", "Decomposition", "Decomposition",
+                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
+                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
+                                       "Decomposition", "Decomposition", "Decomposition", "Decomposition", 
                                        "Decomposition")) %>%
   left_join(., sf_res, by = "Variable") %>%
   left_join(., de_res, by = "Variable") %>%
   left_join(., nc_res, by = "Variable") %>%
   left_join(., sc_res, by = "Variable")
+for (i in 1:nrow(Sal_res)) {
+  if(Sal_res$Variable[i] == "SRP_umol_m2_h") {
+    Sal_res$DE_rho[i] <- 0.79
+  }
+  if(Sal_res$Variable[i] == "SRP_umol_m2_h") {
+    Sal_res$DE_sig[i] <- "Pfdr > 0.05"
+  }
+}
+Sal_res <- subset(Sal_res, Variable != "SR_umol_cm3_d")
 
 # Pretty heatmap
 Sal_res_meta <- Sal_res %>%
   dplyr::select(Shortname, Type, Variable.Type, Hypothesis, Prediction, SF_sig, WA_sig, DE_sig, AL_sig) %>%
   mutate_if(is.character, as.factor)
 Sal_res_mat <- Sal_res %>%
+  rownames_to_column(var = "Num") %>%
+  dplyr::select(-Num) %>%
   column_to_rownames(var = "Shortname") %>%
   dplyr::select(SF_rho, WA_rho, DE_rho, AL_rho) %>%
   as.matrix()
@@ -3043,10 +3110,13 @@ facet_names <- c("CO2_ug_m2_h" = "CO2 Flux (ug/m2/h)",
                  "N2O_ug_m2_h" = "N2O Flux (ug/m2/h)",
                  "NH4_mgL" = "NH4 (mg/L)",
                  "PO4_mgL" = "PO4 (mg/L)")
-strip <- strip_themed(background_x = elem_list_rect(fill = c("#FFFF99", "#A6CEE3", "#A6CEE3", "#B15928",
-                                                                      "#B15928", "#B15928", "#A6CEE3", "#A6CEE3",
-                                                                      "#A6CEE3", "#A6CEE3", "#FFFF99", "#A6CEE3",
-                                                                      "#A6CEE3")))
+strip <- strip_themed(background_x = elem_list_rect(fill = c("#FFFF99", "#B15928",
+                                                             "#B15928", "#B15928",
+                                                             "#A6CEE3", "#A6CEE3", 
+                                                             "#A6CEE3", "#A6CEE3",
+                                                             "#A6CEE3", "#A6CEE3", 
+                                                             "#FFFF99", "#A6CEE3",
+                                                             "#A6CEE3")))
 
 png("FinalFigs/FigureS6.png", width = 8, height = 6, units = "in", res = 300)
 ggplot(metaComb_long, aes(Estuary2, value, color = Estuary2)) +
