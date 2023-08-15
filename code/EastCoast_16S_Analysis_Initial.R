@@ -1705,7 +1705,7 @@ dev.off()
 
 #### _North Carolina ####
 # input_filt <- readRDS("input_filt.rds")
-input_filt <- readRDS("input_filt_wBGC.rds")
+input_filt <- readRDS("data/input_filt_wBGC.rds")
 nc <- filter_data(input_filt,
                   filter_cat = "Estuary",
                   keep_vals = "Alligator")
