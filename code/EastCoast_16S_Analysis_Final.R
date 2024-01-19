@@ -12,6 +12,7 @@
 # Assess site, salinity, depth
 
 
+
 #### 1. Setup ####
 library(plyr) # Data manipulation
 library(tidyverse) # Data manipulation
@@ -1031,7 +1032,7 @@ facet_names <- c("Obs" = "Observational",
                  "Freshwater" = "Fresh",
                  "Oligohaline" = "Oligo")
 phy <- ggplot(barsP, aes(group_by, mean_value, fill = taxon)) +
-  geom_bar(stat = "identity", colour = NA, size = 0.25) +
+  geom_bar(stat = "identity", colour = NA, linewidth = 0.25) +
   labs(x = "Sample", y = "Relative abundance", fill = "Phylum") +
   scale_fill_manual(values = c("grey90", brewer.pal(12, "Paired")[12:1])) +
   scale_y_continuous(expand = c(0.01, 0.01)) +  

@@ -6,6 +6,7 @@
 # Don't do main analysis here - merge with the input$map_loaded file in the main microbial analysis
 # Variables present in all are Salinity, CH4, Cl, SO4, NH4, PO4
 
+
 #### Setup ####
 # Libraries
 library(plyr)
@@ -33,12 +34,13 @@ plot_panel <- function(data, x, y) {
 }
 
 
+
 #### DE Biogeochem ####
 # Dealt with in Excel, see Biogeochem_DE.xlsx
 # Assigned sampleIDs, matched to sequence data
 # Note: all porewater data
-metaDE <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_DE.xlsx",
-                     sheet = 2) %>%
+metaDE <- read_excel("~/Documents/GitHub/EastCoast/data/Biogeochem_DE.xlsx",
+                     sheet = 3) %>%
   filter(sampleID != "NA") %>%
   mutate_at(14:33, as.numeric) %>%
   mutate(Salinity_ppt_all = Cl_mgL/1000,
@@ -109,6 +111,9 @@ metaDE <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_DE.xlsx",
          sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
          N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
          SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
+ggplot(metaDE, aes(Salinity_ppt_all, Salinity_calcd_ppt)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_point()
 
 
 
@@ -119,11 +124,11 @@ metaDE <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_DE.xlsx",
 # Take just flooded samples,  final timepoint, 5 and 15 cm depth
 # Note: _AF1, _AF3, _AF4, BF3, BF4, BF5 sequence IDs not here and prob should be removed
 # Note: SO4 trt has 2, 3, 4, 5a, 5b instead of 1,2,3,4,5. can only match 2,3,4
-NC_chem <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_NC.xlsx",
+NC_chem <- read_excel("~/Documents/GitHub/EastCoast/data/Biogeochem_NC.xlsx",
                       sheet = 1)
-NC_GHG <- read_excel("~/Documents/GitHub/EastCoast/Biogeochem_NC.xlsx",
+NC_GHG <- read_excel("~/Documents/GitHub/EastCoast/data/Biogeochem_NC.xlsx",
                      sheet = 2)
-NC_pH <- read_excel("~/Documents/GitHub/EastCoast/Soil pH-Jessie.xls",
+NC_pH <- read_excel("~/Documents/GitHub/EastCoast/data/Soil pH-Jessie.xls",
                     sheet = 2) %>%
   group_by(sampleID) %>%
   dplyr::summarize(pH = mean(pH)) %>%
@@ -214,6 +219,12 @@ metaNC <- left_join(NC_chem, NC_GHG, by = "bgcID") %>%
                 sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
                 N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
                 SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
+ggplot(metaNC, aes(Salinity_ppt_all, Salinity_calcd_ppt)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_point()
+ggplot(metaNC, aes(Salinity_ppt_all, Salinity)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_point()
 
 
 
@@ -223,7 +234,7 @@ metaNC <- left_join(NC_chem, NC_GHG, by = "bgcID") %>%
 # Other fluxes: N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	SRP_umol_m2_h,	DON_umol_m2_h
 # Porewater pH, conductivity, salinity, CH4, DIC
 # Soil %C, %N, CN, % organic, % inorganic
-metaSC <- read_excel("~/Documents/GitHub/EastCoast/Nov 2011 data from Brookgreen.xlsx",
+metaSC <- read_excel("~/Documents/GitHub/EastCoast/data/Nov 2011 data from Brookgreen.xlsx",
                      sheet = 5) %>%
   mutate(Conductivity_uS_cm = as.numeric(Conductivity_uS_cm),
          Salinity_calcd_ppt = NA,
@@ -289,6 +300,13 @@ metaSC <- read_excel("~/Documents/GitHub/EastCoast/Nov 2011 data from Brookgreen
                 sed_Bulk_dens, sed_Fe_mgL, sed_Mn_mgL, sed_Cu_mgL, sed_Zn_mgL,
                 N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
                 SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
+ggplot(metaSC, aes(Salinity_ppt_all, Salinity_calcd_ppt)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_point()
+ggplot(metaSC, aes(Salinity_ppt_all, Salinity)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_point()
+
 
 
 #### SF Biogeochem ####
@@ -376,7 +394,7 @@ metaSF <- read.delim("~/Documents/GitHub/SF_microbe_methane/data/meta/SF_sal_met
                 N2_umol_m2_h,	SOD_umol_m2_h,	NO3_umol_m2_h,	NH4_umol_m2_h,	
                 SRP_umol_m2_h,	DON_umol_m2_h, Porosity)
 
-# Something is of about salinity and Cl
+# Something is off about salinity and Cl
 m <- lm(Cl_mgL/1000 ~ Salinity, data = metaSF)
 summary(m)
 ggplot(metaSF, aes(Salinity, Cl_mgL/1000)) +
@@ -403,12 +421,16 @@ sum(names(metaDE) != names(metaSC))
 sum(names(metaDE) != names(metaSF))
 metaComb <- rbind(metaDE, metaNC, metaSC, metaSF)
 
-write.csv(metaComb, "biogeochem_all_clean.csv")
+#write.csv(metaComb, "biogeochem_all_clean.csv")
 
 metaComb <- read.csv("biogeochem_all_clean.csv") %>%
   mutate(Estuary = factor(Estuary,
                           levels = c("Waccamaw", "Alligator", "Delaware", "SF"))) %>%
   dplyr::select(-Salinity_calcd_ppt, -Salinity)
+
+metaComb <- read.csv("data/biogeochem_all_clean.csv") %>%
+  mutate(Estuary = factor(Estuary,
+                          levels = c("Waccamaw", "Alligator", "Delaware", "SF")))
 
 
 
