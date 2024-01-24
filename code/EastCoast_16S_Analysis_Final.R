@@ -51,6 +51,7 @@ library(iCAMP) # NTI
 library(lsr) # Cohen's d effect size
 library(ape) # Phylogenetics
 library(usmap) # Maps
+library(ggrepel) # repel text
 
 # Functions
 find_hull <- function(df) df[chull(df$Axis01, df$Axis02),]
@@ -317,6 +318,7 @@ frol$map_loaded$shannon <- diversity(frol$data_loaded,
 
 
 #### 2. Combined ####
+#### _Start here ####
 frol <- readRDS("data/frol.rds")
 frol$map_loaded$EstSalt <- factor(frol$map_loaded$EstSalt,
                                   levels = c("Alligator_Oligohaline", "Alligator_Freshwater",
@@ -515,10 +517,10 @@ leveneTest(frol$map_loaded$rich ~ frol$map_loaded$Depth) # Homogeneous
 m <- aov(rich ~ Estuary + Salt + Depth, data = frol$map_loaded)
 shapiro.test(m$residuals) # Not normally distributed
 Anova(m, type = "II") # All sig.
-m <- aov(rich ~ Est3Salt, data = frol$map_loaded)
+m <- aov(rich ~ ExpEstSalt, data = frol$map_loaded)
 shapiro.test(m$residuals) # Normal
 summary(m)
-t <- emmeans(object = m, specs = "Est3Salt") %>%
+t <- emmeans(object = m, specs = "ExpEstSalt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "rich",
          y = max(frol$map_loaded$rich)+(max(frol$map_loaded$rich)-min(frol$map_loaded$rich))/20)
@@ -536,10 +538,10 @@ leveneTest(frol$map_loaded$shannon ~ frol$map_loaded$Depth) # Homogeneous
 m1 <- aov(shannon ~ Estuary + Salt + Depth, data = frol$map_loaded)
 shapiro.test(m1$residuals) # Not normally distributed but using anyway
 Anova(m1, type = "II") # All sig
-m1 <- aov(shannon ~ Est3Salt, data = frol$map_loaded)
+m1 <- aov(shannon ~ ExpEstSalt, data = frol$map_loaded)
 shapiro.test(m1$residuals) # Not normal
 summary(m1)
-t1 <- emmeans(object = m1, specs = "Est3Salt") %>%
+t1 <- emmeans(object = m1, specs = "ExpEstSalt") %>%
   cld(object = ., adjust = "Tukey", Letters = letters, alpha = 0.05) %>%
   mutate(name = "shannon",
          y = max(frol$map_loaded$shannon)+(max(frol$map_loaded$shannon)-min(frol$map_loaded$shannon))/20)
@@ -558,12 +560,12 @@ facet_df <- c("rich" = "(a) Richness",
 alpha_long <- frol$map_loaded %>%
   pivot_longer(cols = c("rich", "shannon"))
 png("FinalFigs/Figure2.png", width = 7, height = 4.5, units = "in", res = 300)
-ggplot(alpha_long, aes(Est3Salt, value)) +
+ggplot(alpha_long, aes(ExpEstSalt, value)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
   geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
               aes(fill = Depth, shape = Estuary, colour = Salt)) +
-  geom_text(data = label_df, aes(Est3Salt, y, label = str_trim(.group)), 
-            size = 4, color = "black") +
+  geom_text(data = label_df, aes(ExpEstSalt, y, label = str_trim(.group)), 
+            size = 3, color = "black") +
   labs(x = "Site",
        colour = "Salinity",
        fill = "Depth (cm)",
@@ -583,16 +585,16 @@ ggplot(alpha_long, aes(Est3Salt, value)) +
         legend.key.size = unit(0.4, "cm"),
         axis.title = element_blank(),
         axis.text.y = element_text(size = 10),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        axis.text.x = element_text(size = 9, angle = 315, hjust = 0),
         strip.text = element_text(size = 10),
-        plot.margin = margin(5, 5, 5, 30, "pt"))
+        plot.margin = margin(5, 10, 5, 5, "pt"))
 dev.off()
 
 # Remake without barplot and extract legend for beta diversity plot
-good_leg_plot <- ggplot(alpha_long, aes(Est3Salt, value)) +
+good_leg_plot <- ggplot(alpha_long, aes(ExpEstSalt, value)) +
   geom_jitter(size = 2, alpha = 0.75, width = 0.2, 
               aes(fill = Depth, shape = Estuary, colour = Salt)) +
-  geom_text(data = label_df, aes(Est3Salt, y, label = str_trim(.group)), 
+  geom_text(data = label_df, aes(ExpEstSalt, y, label = str_trim(.group)), 
             size = 4, color = "black") +
   labs(x = "Site",
        colour = "Salinity",
@@ -3122,11 +3124,30 @@ strip <- strip_themed(background_x = elem_list_rect(fill = c("#FFFF99", "#B15928
                                                              "#FFFF99", "#A6CEE3",
                                                              "#A6CEE3")))
 
-png("FinalFigs/FigureS6.png", width = 8, height = 6, units = "in", res = 300)
+meanY <- metaComb_long %>%
+  group_by(variable) %>%
+  summarise(varmax = max(value, na.rm = T)) %>%
+  mutate(y = varmax + varmax/1.9)
+
+meanlab <- metaComb_long %>%
+  group_by(Estuary2, Salt, variable) %>%
+  summarise(mean = round(mean(value, na.rm = T), 1),
+            max = max(value, na.rm = T),
+            min = min(value, na.rm = T)) %>%
+  left_join(., meanY, by = "variable")
+
+png("FinalFigs/FigureS7.png", width = 8, height = 6, units = "in", res = 300)
 ggplot(metaComb_long, aes(Estuary2, value, color = Estuary2)) +
   geom_boxplot(outlier.shape = NA, aes(colour = Salt)) +
   geom_point(size = 2, alpha = 0.75, position = position_jitterdodge(),
               aes(shape = Estuary2, colour = Salt)) +
+  geom_text_repel(data = meanlab,
+            aes(Estuary2, y, group = Salt, label = mean),
+            position = position_dodge(width = 0.9),
+            size = 2, color = "black", inherit.aes = F,
+            min.segment.length = 2,
+            direction = "y",
+            box.padding = 0.1) +
   labs(x = "Site",
        colour = "Salinity",
        fill = "Depth (cm)",
@@ -3138,7 +3159,8 @@ ggplot(metaComb_long, aes(Estuary2, value, color = Estuary2)) +
   guides(shape = guide_legend(order = 1,),
          colour = guide_legend(order = 2),
          fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
-  facet_wrap2(~ variable, scales = "free_y", labeller = as_labeller(facet_names), strip = strip, ncol = 3) +
+  facet_wrap2(~ variable, scales = "free_y", labeller = as_labeller(facet_names), 
+              strip = strip, ncol = 3) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.y = element_blank()) +
