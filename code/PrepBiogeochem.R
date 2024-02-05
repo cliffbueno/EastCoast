@@ -114,6 +114,11 @@ metaDE <- read_excel("~/Documents/GitHub/EastCoast/data/Biogeochem_DE.xlsx",
 ggplot(metaDE, aes(Salinity_ppt_all, Salinity_calcd_ppt)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
   geom_point()
+check <- metaDE %>%
+  separate(sampleID, into = c("Depth", "Site", "Blah1", "Blah2", "Blah3"), sep = "_") %>%
+  select(Site, Salinity_ppt_all) %>%
+  group_by(Site) %>%
+  summarize(mean_ppt = mean(Salinity_ppt_all, na.rm = T))
 
 
 

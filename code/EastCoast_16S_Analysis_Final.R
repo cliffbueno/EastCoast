@@ -1393,7 +1393,7 @@ b <- ggplot(frol_guilds, aes(AO_NOB, MT*100, colour = Estuary3, shape = Estuary3
         axis.title = element_text(size = 10))
 # Variable!
 
-png("FinalFigs/FigureS3.png", width = 8, height = 4, units = "in", res = 300)
+png("FinalFigs/FigureS5.png", width = 8, height = 4, units = "in", res = 300)
 plot_grid(a, b, l, ncol = 3, rel_widths = c(0.43, 0.43, 0.14), labels = c("a", "b", ""))
 dev.off()
 
@@ -1403,7 +1403,7 @@ dev.off()
 frol_mg <- filter_taxa_from_input(frol,
                                   taxa_to_keep = c("CH4_ac", "CH4_H2", "CH4_me", "CH4_mix"),
                                   at_spec_level = 9)
-tax_sum_mgt <- summarize_taxonomy(input = frol_mg, 
+tax_sum_mg <- summarize_taxonomy(input = frol_mg, 
                                  level = 5, 
                                  report_higher_tax = F, 
                                  relative = F) %>%
@@ -2117,11 +2117,13 @@ CH4_res_mat <- CH4_res %>%
   dplyr::select(-Num) %>%
   column_to_rownames(var = "Shortname") %>%
   dplyr::select(SF_rho, WA_rho, DE_rho, AL_rho) %>%
+  rename("Wacc_rho" = WA_rho,
+         "Alli_rho" = AL_rho) %>%
   as.matrix()
 ann_rows <- data.frame(row.names = rownames(CH4_res_mat), 
-                       "AL_sig" = CH4_res_meta$`AL_sig`,
+                       "Alli_sig" = CH4_res_meta$`AL_sig`,
                        "DE_sig" = CH4_res_meta$`DE_sig`,
-                       "WA_sig" = CH4_res_meta$`WA_sig`,
+                       "Wacc_sig" = CH4_res_meta$`WA_sig`,
                        "SF_sig" = CH4_res_meta$`SF_sig`,
                        Prediction = CH4_res_meta$Prediction,
                        Hypothesis = CH4_res_meta$Hypothesis,
@@ -2142,9 +2144,9 @@ ann_colors <- list(Type = c(Flux = "#FFFF99",
                               `Pfdr > 0.05` = "white"),
                    "DE_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"),
-                   "AL_sig" = c(`Pfdr < 0.05` = "black", 
+                   "Alli_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"),
-                   "WA_sig" = c(`Pfdr < 0.05` = "black", 
+                   "Wacc_sig" = c(`Pfdr < 0.05` = "black", 
                               `Pfdr > 0.05` = "white"))
 pheatmap(CH4_res_mat,
          legend = T,
@@ -2164,7 +2166,7 @@ pheatmap(CH4_res_mat,
          cluster_rows = F,
          cluster_cols = F,
          gaps_row = c(5, 9, 22),
-         filename = "FinalFigs/Figure4.png",
+         filename = "FinalFigs/Figure5.png",
          width = 5,
          height = 7)
 dev.off()
@@ -2322,11 +2324,13 @@ Sal_res_mat <- Sal_res %>%
   dplyr::select(-Num) %>%
   column_to_rownames(var = "Shortname") %>%
   dplyr::select(SF_rho, WA_rho, DE_rho, AL_rho) %>%
+  rename("Wacc_rho" = WA_rho,
+         "Alli_rho" = AL_rho) %>%
   as.matrix()
 ann_rows <- data.frame(row.names = rownames(Sal_res_mat), 
-                       "AL_sig" = Sal_res_meta$`AL_sig`,
+                       "Alli_sig" = Sal_res_meta$`AL_sig`,
                        "DE_sig" = Sal_res_meta$`DE_sig`,
-                       "WA_sig" = Sal_res_meta$`WA_sig`,
+                       "Wacc_sig" = Sal_res_meta$`WA_sig`,
                        "SF_sig" = Sal_res_meta$`SF_sig`,
                        Prediction = Sal_res_meta$Prediction,
                        Hypothesis = Sal_res_meta$Hypothesis,
@@ -2347,9 +2351,9 @@ ann_colors <- list(Type = c(Flux = "#FFFF99",
                                 `Pfdr > 0.05` = "white"),
                    "DE_sig" = c(`Pfdr < 0.05` = "black", 
                                 `Pfdr > 0.05` = "white"),
-                   "AL_sig" = c(`Pfdr < 0.05` = "black", 
+                   "Alli_sig" = c(`Pfdr < 0.05` = "black", 
                                 `Pfdr > 0.05` = "white"),
-                   "WA_sig" = c(`Pfdr < 0.05` = "black", 
+                   "Wacc_sig" = c(`Pfdr < 0.05` = "black", 
                                 `Pfdr > 0.05` = "white"))
 pheatmap(Sal_res_mat,
          legend = T,
@@ -2610,15 +2614,15 @@ plot_grid(plot_venn_diagram2_mirror(sf, "Salt", 0.000000000000000000000000000001
           label_y = 0.9)
 dev.off()
 
-# Also get site Venn at all levels - Figure S10
+# Also get site Venn at all levels - Figure S11
 # Need short site names
 frol$map_loaded$EstuaryShort <- recode_factor(frol$map_loaded$Estuary2,
                                             "SF" = "SF",
-                                            "Waccamaw" = "WA",
+                                            "Waccamaw" = "Wacc.",
                                             "Delaware" = "DE",
-                                            "Alligator" = "AL")
+                                            "Alligator" = "Alli.")
 frol$map_loaded$EstuaryShort <- factor(frol$map_loaded$EstuaryShort,
-                                       levels = c("SF", "WA", "DE", "AL"))
+                                       levels = c("SF", "Wacc.", "DE", "Alli."))
 phy <- summarize_taxonomy(frol, level = 2, report_higher_tax = F)
 cla <- summarize_taxonomy(frol, level = 3, report_higher_tax = F)
 ord <- summarize_taxonomy(frol, level = 4, report_higher_tax = F)
@@ -2636,7 +2640,7 @@ input_family$data_loaded <- fam
 input_genus <- frol
 input_genus$data_loaded <- gen
 
-png("FinalFigs/FigureS10.png", width = 9, height = 6, units = "in", res = 300)
+png("FinalFigs/FigureS11.png", width = 9, height = 6, units = "in", res = 300)
 plot_grid(plot_venn_diagram(input_phylum, "EstuaryShort", 0.00000000000000001),
           plot_venn_diagram(input_class, "EstuaryShort", 0.00000000000000001),
           plot_venn_diagram(input_order, "EstuaryShort", 0.00000000000000001),
