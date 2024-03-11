@@ -1,5 +1,6 @@
 # East Coast/SF 16S final data analysis
 # by Cliff Bueno de Mesquita, Tringe Lab, JGI, Fall 2022 - Spring 2023
+# Minor updates following reviewer comments, Spring 2024
 # Samples from SF Bay, Delaware River, SC, NC
 # Use just freshwater to oligohaline samples
 # Just control and +ASW treatment, or transplants to oligohaline site
@@ -88,7 +89,7 @@ Guild_cols <- read.table("~/Documents/GitHub/SF_microbe_methane/data/colors/Guil
   arrange(Index)
 
 
-
+#### _Process ####
 # Input, filter, and rarefy (done once, now can input processed file at at 2. Combined)
 input_filt <- readRDS("input_filt_comb_wBGC.rds")
 input_filt$map_loaded <- input_filt$map_loaded %>%
@@ -451,8 +452,61 @@ frol$map_loaded$sed_per_C[47:61] <- nc_cn$`%C`
 frol$map_loaded$sed_per_N[47:61] <- nc_cn$`%N`
 frol$map_loaded$sed_CN[47:61] <- nc_cn$`C:N`
 
+# Add Delaware lab pH data (Nat found much later on!)
+de_ph <- read_xlsx("data/Delaware Lab Expt pH.xlsx", sheet = 2) %>%
+  arrange(sampleID)
+sum(rownames(frol$map_loaded)[9:16] != de_ph$sampleID) # good
+frol$map_loaded$pH[9:16] <- de_ph$pH
+
+# Add Delaware CH4 data
+# Nat sent whole-core integrated values. Add duplicates to D1 and D2 like the other datasets
+# When plotting, only plot one depth though.
+# Don't use other lab biogeochem data because they are all integrated and not separated by depth
+# Values would have to be repeated by depth and this is not accurate, better to leave out.
+# And actually, can't even back convert from integrated to concentration because don't have datasheet.
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_FW_d1_12_1") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 20303.49838
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_FW_d2_12_1") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 20303.49838
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_FW_d1_12_2") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 84770.97026
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_FW_d2_12_2") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 84770.97026
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_SW_d1_12_1") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 32976.95881
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_SW_d2_12_1") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 32976.95881
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_SW_d1_12_2") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 68221.38115
+  }
+}
+for (i in 1:nrow(frol$map_loaded)) {
+  if (frol$map_loaded$sampleID[i] == "TS_SW_d2_12_2") {
+    frol$map_loaded$CH4_ug_m2_h[i] <- 68221.38115
+  }
+}
+
 # Export this metadata
-write.csv(frol$map_loaded, "data/metadata_used.csv")
+#write.csv(frol$map_loaded, "data/metadata_used.csv")
 
 # Subsets
 sf <- filter_data(frol,
@@ -476,8 +530,8 @@ nc <- filter_data(frol,
 
 # Get environmental variables for each
 env <- frol$map_loaded %>%
-  dplyr::select(CH4_ug_m2_h, Salinity_ppt_all)
-env_nona <- na.omit(env) # n = 110
+  dplyr::select(CH4_ug_m2_h, Salinity_ppt_all, pH)
+env_nona <- na.omit(env) # n = 110. 102 with pH.
 
 env_sf <- sf$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, 
@@ -493,6 +547,12 @@ env_detra <- detra$map_loaded %>%
                 NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
                 Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
 env_nona_detra <- na.omit(env_detra) # n = 8
+
+env_deinc <- deinc$map_loaded %>%
+  dplyr::select(CH4_ug_m2_h, 
+                #Salinity_ppt_all, # No salinity because in mmol/m2 and can't convert
+                pH)
+env_nona_deinc <- na.omit(env_deinc) # n = 8
 
 env_sc <- sc$map_loaded %>%
   dplyr::select(CH4_ug_m2_h, CO2_ug_m2_h, CH4_pw_air_ppmv,
@@ -645,7 +705,7 @@ vec.df <- as.data.frame(ef$vectors$arrows*sqrt(ef$vectors$r)) %>%
          Dim2 = Dim2 * manual_factor) %>%
   mutate(variables = rownames(.)) %>%
   filter(ef$vectors$pvals < 0.05) %>%
-  mutate(shortnames = c("CH4", "Salinity"))
+  mutate(shortnames = c("CH4", "Salinity", "pH"))
 
 # Plot with significant vectors
 ordiplot(pcoa)
@@ -663,6 +723,14 @@ g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
                alpha = 0.1, show.legend = F) +
   geom_point(size = 3, alpha = 0.5, aes(fill = Depth, colour = Salt, shape = Estuary),
              show.legend = T) +
+  geom_segment(data = vec.df,
+               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
+               arrow = arrow(length = unit(0.35, "cm")),
+               colour = "gray", alpha = 0.5,
+               inherit.aes = FALSE) + 
+  geom_text(data = vec.df,
+                  aes(x = Dim1, y = Dim2, label = shortnames),
+                  size = 2, color = "black") +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = ""),
        colour = "Salt",
@@ -672,6 +740,8 @@ g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
                                  "blue", "red", "blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
   scale_shape_manual(values = c(21, 22, 23, 24)) +
+  scale_y_continuous(expand = c(0.05, 0.05)) + 
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
   guides(shape = guide_legend(order = 1,),
          colour = guide_legend(order = 2),
          fill = guide_legend(override.aes = list(shape = c(16, 1)), order = 3)) +
@@ -683,15 +753,7 @@ g <- ggplot(frol$map_loaded, aes(Axis01, Axis02)) +
         axis.title = element_text(size = 10), 
         axis.text = element_text(size = 10),
         plot.title = element_text(vjust = -0.5, size = 12),
-        plot.margin = margin(0,0,0,10, "pt")) +
-  geom_segment(data = vec.df,
-               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
-               arrow = arrow(length = unit(0.35, "cm")),
-               colour = "gray", alpha = 0.5,
-               inherit.aes = FALSE) + 
-  geom_text(data = vec.df,
-            aes(x = Dim1, y = Dim2, label = shortnames),
-            size = 2, color = "black")
+        plot.margin = margin(0,0,0,10, "pt"))
 # leg <- get_legend(g) # use good_leg from alpha diversity plot
 g <- g + theme(legend.position = "none")
 g
@@ -738,19 +800,15 @@ g2 <- ggplot(sf$map_loaded, aes(Axis01, Axis02)) +
                arrow = arrow(length = unit(0.35, "cm")),
                colour = "gray", alpha = 0.5,
                inherit.aes = FALSE) + 
-  geom_text(data = subset(vec.df_sf, shortnames != "CO2" & shortnames != "CH4"),
-            aes(x = Dim1, y = Dim2, label = shortnames),
-            size = 2, color = "black") +
-  geom_text(data = subset(vec.df_sf, shortnames == "CO2"),
-            aes(x = Dim1, y = Dim2 - 0.03, label = shortnames),
-            size = 2, color = "black") +
-  geom_text(data = subset(vec.df_sf, shortnames == "CH4"),
-            aes(x = Dim1 - 0.04, y = Dim2, label = shortnames),
-            size = 2, color = "black") +
+  geom_text_repel(data = vec.df_sf,
+                  aes(x = Dim1, y = Dim2, label = shortnames),
+                  size = 2, color = "black", box.padding = 0.05) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = "")) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
+  scale_y_continuous(expand = c(0.05, 0.05)) + 
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
   theme_bw() +
   ggtitle("(b) SF (field obs.)") +
   theme(legend.position = "none",
@@ -774,7 +832,7 @@ ef_detra <- envfit(pcoa_detra, env_detra, permutations = 999, na.rm = TRUE)
 ef_detra
 ordiplot(pcoa_detra)
 plot(ef_detra, p.max = 0.05, cex = 0.5)
-manual_factor_detra <- 0.64
+manual_factor_detra <- 0.17
 vec.df_detra <- as.data.frame(ef_detra$vectors$arrows*sqrt(ef_detra$vectors$r)) %>%
   mutate(Dim1 = Dim1 * manual_factor_detra,
          Dim2 = Dim2 * manual_factor_detra) %>%
@@ -798,13 +856,15 @@ g3 <- ggplot(detra$map_loaded, aes(Axis01, Axis02)) +
                arrow = arrow(length = unit(0.35, "cm")),
                colour = "gray", alpha = 0.5,
                inherit.aes = FALSE) + 
-  geom_text(data = vec.df_detra,
+  geom_text_repel(data = vec.df_detra,
             aes(x = Dim1, y = Dim2, label = shortnames),
-            size = 2, color = "black") +
+            size = 2, color = "black", box.padding = 0.05) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = "")) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
+  scale_y_continuous(expand = c(0.05, 0.05)) + 
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
   theme_bw() +
   ggtitle("(d) Delaware (field exp.)") +
   theme(legend.position = "none",
@@ -852,13 +912,15 @@ g4 <- ggplot(sc$map_loaded, aes(Axis01, Axis02)) +
                arrow = arrow(length = unit(0.35, "cm")),
                colour = "gray", alpha = 0.5,
                inherit.aes = FALSE) + 
-  geom_text(data = vec.df_sc,
+  geom_text_repel(data = vec.df_sc,
             aes(x = Dim1, y = Dim2, label = shortnames),
-            size = 2, color = "black") +
+            size = 2, color = "black", box.padding = 0.05) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = "")) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
+  scale_y_continuous(expand = c(0.05, 0.05)) + 
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
   theme_bw() +
   ggtitle("(c) Waccamaw (field exp.)") +
   theme(legend.position = "none",
@@ -878,26 +940,13 @@ mod$anova # SOD, CO2
 # Note: in initial analysis, thought there was error, but looks like maybe there isn't
 # Just not clear separation, no hard evidence of any sample label error
 # Note no env. data here
+# Update - now have pH data. Check.
 bc_deinc <- calc_dm(deinc$data_loaded)
-env_deinc <- deinc$map_loaded %>%
-  dplyr::select(Salinity_ppt_all, 
-                NH4_mgL, PO4_mgL, Cl_mgL, SO4_mgL,
-                Fe_mgL, Porosity, Acetate_mgL, TotalVFA_uM, SR_umol_cm3_d, AMG_umol_cm3_d)
-env_nona_deinc <- na.omit(env_deinc) # n = 8
 pcoa_deinc <- cmdscale(bc_deinc, k = nrow(deinc$map_loaded) - 1, eig = T)
 set.seed(100)
 ef_deinc <- envfit(pcoa_deinc, env_deinc, permutations = 999, na.rm = TRUE)
 ef_deinc
-ordiplot(pcoa_deinc)
-plot(ef_deinc, p.max = 0.05, cex = 0.5)
-manual_factor_deinc <- 0.5
-vec.df_deinc <- as.data.frame(ef_deinc$vectors$arrows*sqrt(ef_deinc$vectors$r)) %>%
-  mutate(Dim1 = Dim1 * manual_factor_deinc,
-         Dim2 = Dim2 * manual_factor_deinc) %>%
-  mutate(variables = rownames(.)) %>%
-  filter(ef_deinc$vectors$pvals < 0.05) %>%
-  filter(variables != "Cl_mgL") %>%
-  mutate(shortnames = c("Salinity", "SR"))
+# CH4 and pH not significant, don't plot
 pcoaA1 <- round((eigenvals(pcoa_deinc)/sum(eigenvals(pcoa_deinc)))[1]*100, digits = 1)
 pcoaA2 <- round((eigenvals(pcoa_deinc)/sum(eigenvals(pcoa_deinc)))[2]*100, digits = 1)
 deinc$map_loaded$Axis01 <- scores(pcoa_deinc)[,1]
@@ -909,18 +958,12 @@ g5 <- ggplot(deinc$map_loaded, aes(Axis01, Axis02)) +
                alpha = 0.1, show.legend = F) +
   geom_point(size = 3, alpha = 0.5, aes(colour = Salt, fill = Depth), shape = 23,
              show.legend = F) +
-#  geom_segment(data = vec.df_deinc,
-#               aes(x = 0, xend = Dim1, y = 0, yend = Dim2),
-#               arrow = arrow(length = unit(0.5, "cm")),
-#               colour = "gray", alpha = 0.5,
-#               inherit.aes = FALSE) + 
-#  geom_text(data = vec.df_deinc,
-#            aes(x = Dim1, y = Dim2, label = shortnames),
-#            size = 2, color = "black") +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = "")) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
+  scale_y_continuous(expand = c(0.05, 0.05)) + 
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
   theme_bw() +
   ggtitle("(e) Delaware (lab exp.)") +
   theme(legend.position = "none",
@@ -968,13 +1011,15 @@ g6 <- ggplot(nc$map_loaded, aes(Axis01, Axis02)) +
                arrow = arrow(length = unit(0.35, "cm")),
                colour = "gray", alpha = 0.5,
                inherit.aes = FALSE) + 
-  geom_text(data = vec.df_nc,
+  geom_text_repel(data = vec.df_nc,
             aes(x = Dim1, y = Dim2, label = shortnames),
-            size = 2, color = "black") +
+            size = 2, color = "black", box.padding = 0.05) +
   labs(x = paste("PC1: ", pcoaA1, "%", sep = ""), 
        y = paste("PC2: ", pcoaA2, "%", sep = "")) +
   scale_colour_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("black", "white")) +
+  scale_y_continuous(expand = c(0.05, 0.05)) + 
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
   theme_bw() +
   ggtitle("(f) Alligator (lab exp.)") +
   theme(legend.position = "none",
@@ -1591,6 +1636,10 @@ table(frol_mg$taxonomy_loaded$taxonomy9)
 frol_mt <- filter_taxa_from_input(frol,
                                   taxa_to_keep = c("ANME", "MOB_I", "MOB_II", "MOB_IIa"),
                                   at_spec_level = 9)
+# Remove Methylotenera. Methylotroph but not CH4 oxidizer!
+frol_mt <- filter_taxa_from_input(frol_mt,
+                                  taxa_to_remove = "Methylotenera",
+                                  at_spec_level = 6)
 tax_sum_mt <- summarize_taxonomy(input = frol_mt, 
                                  level = 6, 
                                  report_higher_tax = F, 
@@ -1632,7 +1681,8 @@ ggplot(barsMT, aes(group_by, mean_value, fill = taxon)) +
   geom_bar(stat = "identity", colour = NA, size = 0.25) +
   labs(x = "Sample", y = "% Abundance", fill = "Genus") +
   scale_fill_manual(values = c("grey75", "grey90", mycolors)) +
-  scale_y_continuous(expand = c(0.01, 0.01)) +  
+  scale_y_continuous(expand = c(0.01, 0.01),
+                     limits = c(0,10)) +  
   facet_nested(~ Exp + Estuary2 + Salt, space = "free", scales = "free_x", 
                labeller = as_labeller(facet_names)) +
   guides(fill = guide_legend(ncol = 1)) +
@@ -1763,10 +1813,11 @@ res_mt <- full_join(res_mt_sf, res_mt_sc, by = "Taxon", keep = F) %>%
   replace_na(., replace = list(SF = "NP", WA = "NP", DEF = "NP", DEL = "NP", AL = "NP")) %>%
   left_join(., frol_mt$taxonomy_loaded, by = c("Taxon" = "taxonomy6")) %>%
   group_by(Taxon) %>%
-  slice(n = 1) %>%
+  slice_head(n = 1) %>%
   left_join(., topmt_noUC, by = c("Taxon" = "taxon")) %>%
   arrange(ord) %>%
-  dplyr::select(-mean, -ord, -taxonomy1, -taxonomy2, -taxonomy3, -taxonomy4, -taxonomy5, -taxonomy7, -taxonomy8)
+  dplyr::select(-mean, -ord, -taxonomy1, -taxonomy2, -taxonomy3, -taxonomy4, 
+                -taxonomy5, -taxonomy7, -taxonomy8)
 write_xlsx(res_mt, "mt_results_unformatted.xlsx", format_headers = F)
 
 
@@ -1883,28 +1934,6 @@ leveneTest(CH4_ug_m2_h ~ Salt, data = deinc$map_loaded)
 shapiro.test(deinc$map_loaded$CH4_ug_m2_h)
 t.test(CH4_ug_m2_h ~ Salt, data = deinc$map_loaded) # No data but sig.
 wilcox.test(CH4_ug_m2_h ~ Salt, data = deinc$map_loaded) # No data but sig.
-# No data yet. Data are from Weston et al. 2011. 
-# Nat sent integrated values for now put as D1.
-for (i in 1:nrow(frol$map_loaded)) {
-  if (frol$map_loaded$sampleID[i] == "TS_FW_d1_12_1") {
-    frol$map_loaded$CH4_ug_m2_h[i] <- 20303.49838
-  }
-}
-for (i in 1:nrow(frol$map_loaded)) {
-  if (frol$map_loaded$sampleID[i] == "TS_FW_d1_12_2") {
-    frol$map_loaded$CH4_ug_m2_h[i] <- 84770.97026
-  }
-}
-for (i in 1:nrow(frol$map_loaded)) {
-  if (frol$map_loaded$sampleID[i] == "TS_SW_d1_12_1") {
-    frol$map_loaded$CH4_ug_m2_h[i] <- 32976.95881
-  }
-}
-for (i in 1:nrow(frol$map_loaded)) {
-  if (frol$map_loaded$sampleID[i] == "TS_SW_d1_12_2") {
-    frol$map_loaded$CH4_ug_m2_h[i] <- 68221.38115
-  }
-}
 
 leveneTest(CH4_ug_m2_h ~ Salt, data = nc$map_loaded)
 shapiro.test(nc$map_loaded$CH4_ug_m2_h)
