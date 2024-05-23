@@ -2138,6 +2138,8 @@ for (i in 1:nrow(CH4_res)) {
 CH4_res <- subset(CH4_res, Variable != "SR_umol_cm3_d")
 
 # Pretty heatmap
+# Updated with reviewer feedback to remove hypothesis and significance columns
+# Add significance asterisks instead
 CH4_res_meta <- CH4_res %>%
   dplyr::select(Shortname, Type, Variable.Type, Hypothesis, Prediction, SF_sig, WA_sig, DE_sig, AL_sig) %>%
   mutate_if(is.character, as.factor)
@@ -2150,12 +2152,12 @@ CH4_res_mat <- CH4_res %>%
          "Alli_rho" = AL_rho) %>%
   as.matrix()
 ann_rows <- data.frame(row.names = rownames(CH4_res_mat), 
-                       "Alli_sig" = CH4_res_meta$`AL_sig`,
-                       "DE_sig" = CH4_res_meta$`DE_sig`,
-                       "Wacc_sig" = CH4_res_meta$`WA_sig`,
-                       "SF_sig" = CH4_res_meta$`SF_sig`,
+                       #"Alli_sig" = CH4_res_meta$`AL_sig`,
+                       #"DE_sig" = CH4_res_meta$`DE_sig`,
+                       #"Wacc_sig" = CH4_res_meta$`WA_sig`,
+                       #"SF_sig" = CH4_res_meta$`SF_sig`,
                        Prediction = CH4_res_meta$Prediction,
-                       Hypothesis = CH4_res_meta$Hypothesis,
+                       #Hypothesis = CH4_res_meta$Hypothesis,
                        Variable = CH4_res_meta$Variable.Type,
                        Type = CH4_res_meta$Type)
 ann_colors <- list(Type = c(Flux = "#FFFF99", 
@@ -2163,20 +2165,20 @@ ann_colors <- list(Type = c(Flux = "#FFFF99",
                             Sediment = "#B15928"),
                    Variable = c(Chemical = "#440154FF",
                                 Microbial = "#FDE725FF"),
-                   Hypothesis = c(Methanogens = "#F8766D",
-                                  Methanotrophs = "#7CAE00",
-                                  `Alternate e-` = "#00BFC4",
-                                  Decomposition = "#C77CFF"),
+                   # Hypothesis = c(Methanogens = "#F8766D",
+                   #                Methanotrophs = "#7CAE00",
+                   #                `Alternate e-` = "#00BFC4",
+                   #                Decomposition = "#C77CFF"),
+                   # "SF_sig" = c(`Pfdr < 0.05` = "black", 
+                   #            `Pfdr > 0.05` = "white"),
+                   # "DE_sig" = c(`Pfdr < 0.05` = "black", 
+                   #            `Pfdr > 0.05` = "white"),
+                   # "Alli_sig" = c(`Pfdr < 0.05` = "black", 
+                   #            `Pfdr > 0.05` = "white"),
+                   # "Wacc_sig" = c(`Pfdr < 0.05` = "black", 
+                   #            `Pfdr > 0.05` = "white"),
                    Prediction = c(Positive = "red", 
-                                  Negative = "blue"),
-                   "SF_sig" = c(`Pfdr < 0.05` = "black", 
-                              `Pfdr > 0.05` = "white"),
-                   "DE_sig" = c(`Pfdr < 0.05` = "black", 
-                              `Pfdr > 0.05` = "white"),
-                   "Alli_sig" = c(`Pfdr < 0.05` = "black", 
-                              `Pfdr > 0.05` = "white"),
-                   "Wacc_sig" = c(`Pfdr < 0.05` = "black", 
-                              `Pfdr > 0.05` = "white"))
+                                  Negative = "blue"))
 pheatmap(CH4_res_mat,
          legend = T,
          legend_breaks = c(-0.5, 0, 0.5, max(na.omit(CH4_res_mat))),
@@ -2194,9 +2196,10 @@ pheatmap(CH4_res_mat,
          annotation_colors = ann_colors,
          cluster_rows = F,
          cluster_cols = F,
-         gaps_row = c(5, 9, 22),
+         cellwidth = 20,
+         gaps_row = c(9, 22),
          filename = "FinalFigs/Figure5.png",
-         width = 5,
+         width = 4,
          height = 7)
 dev.off()
 dev.set(dev.next())
@@ -2345,6 +2348,8 @@ for (i in 1:nrow(Sal_res)) {
 Sal_res <- subset(Sal_res, Variable != "SR_umol_cm3_d")
 
 # Pretty heatmap
+# Updated with reviewer feedback to remove hypothesis and significance columns
+# Add significance asterisks instead
 Sal_res_meta <- Sal_res %>%
   dplyr::select(Shortname, Type, Variable.Type, Hypothesis, Prediction, SF_sig, WA_sig, DE_sig, AL_sig) %>%
   mutate_if(is.character, as.factor)
@@ -2357,12 +2362,12 @@ Sal_res_mat <- Sal_res %>%
          "Alli_rho" = AL_rho) %>%
   as.matrix()
 ann_rows <- data.frame(row.names = rownames(Sal_res_mat), 
-                       "Alli_sig" = Sal_res_meta$`AL_sig`,
-                       "DE_sig" = Sal_res_meta$`DE_sig`,
-                       "Wacc_sig" = Sal_res_meta$`WA_sig`,
-                       "SF_sig" = Sal_res_meta$`SF_sig`,
+                       #"Alli_sig" = Sal_res_meta$`AL_sig`,
+                       #"DE_sig" = Sal_res_meta$`DE_sig`,
+                       #"Wacc_sig" = Sal_res_meta$`WA_sig`,
+                       #"SF_sig" = Sal_res_meta$`SF_sig`,
                        Prediction = Sal_res_meta$Prediction,
-                       Hypothesis = Sal_res_meta$Hypothesis,
+                       #Hypothesis = Sal_res_meta$Hypothesis,
                        Variable = Sal_res_meta$Variable.Type,
                        Type = Sal_res_meta$Type)
 ann_colors <- list(Type = c(Flux = "#FFFF99", 
@@ -2370,23 +2375,23 @@ ann_colors <- list(Type = c(Flux = "#FFFF99",
                             Sediment = "#B15928"),
                    Variable = c(Chemical = "#440154FF",
                                 Microbial = "#FDE725FF"),
-                   Hypothesis = c(Methanogens = "#F8766D",
-                                  Methanotrophs = "#7CAE00",
-                                  `Alternate e-` = "#00BFC4",
-                                  Decomposition = "#C77CFF"),
+                   # Hypothesis = c(Methanogens = "#F8766D",
+                   #                Methanotrophs = "#7CAE00",
+                   #                `Alternate e-` = "#00BFC4",
+                   #                Decomposition = "#C77CFF"),
+                   # "SF_sig" = c(`Pfdr < 0.05` = "black", 
+                   #              `Pfdr > 0.05` = "white"),
+                   # "DE_sig" = c(`Pfdr < 0.05` = "black", 
+                   #              `Pfdr > 0.05` = "white"),
+                   # "Alli_sig" = c(`Pfdr < 0.05` = "black", 
+                   #                `Pfdr > 0.05` = "white"),
+                   # "Wacc_sig" = c(`Pfdr < 0.05` = "black", 
+                   #                `Pfdr > 0.05` = "white"),
                    Prediction = c(Positive = "red", 
-                                  Negative = "blue"),
-                   "SF_sig" = c(`Pfdr < 0.05` = "black", 
-                                `Pfdr > 0.05` = "white"),
-                   "DE_sig" = c(`Pfdr < 0.05` = "black", 
-                                `Pfdr > 0.05` = "white"),
-                   "Alli_sig" = c(`Pfdr < 0.05` = "black", 
-                                `Pfdr > 0.05` = "white"),
-                   "Wacc_sig" = c(`Pfdr < 0.05` = "black", 
-                                `Pfdr > 0.05` = "white"))
+                                  Negative = "blue"))
 pheatmap(Sal_res_mat,
          legend = T,
-         legend_breaks = c(-0.5, 0, 0.5, max(na.omit(Sal_res_mat))),
+         legend_breaks = c(-0.5, 0, 0.5, 0.85),
          legend_labels = c("-0.5", "0", "0.5", "rho\n"),
          main = "",
          #color = bluered(100),
@@ -2401,9 +2406,10 @@ pheatmap(Sal_res_mat,
          annotation_colors = ann_colors,
          cluster_rows = F,
          cluster_cols = F,
-         gaps_row = c(5, 9, 21),
+         cellwidth = 20,
+         gaps_row = c(9, 22),
          filename = "FinalFigs/FigureS2.png",
-         width = 5,
+         width = 4,
          height = 7)
 dev.off()
 dev.set(dev.next())
