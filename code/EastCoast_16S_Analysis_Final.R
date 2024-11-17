@@ -2899,6 +2899,10 @@ NTI <- NTI.p(bac_asv,
              sig.index = "NTI",
              silent = FALSE)
 saveRDS(NTI, "NTI.rds")
+NTI <- readRDS("data/NTI.rds")
+hist(NTI$NTI)
+NTI_concat <- readRDS("data/NTI_concat.rds")
+hist(NTI_concat$NTI)
 
 # But, what we really should do is NTI for each experiment.
 # (Do this part on server for speed)
